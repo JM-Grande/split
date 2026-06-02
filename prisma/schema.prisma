@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                       String       @id @default(uuid())
+  name                     String       @default("Admin")
+  email                    String       @unique
+  emailVerified            DateTime?
+  password                 String
+  default_split_percentage Float        @default(60)
+  openrouterKey            String?
+  aiModel                  String       @default("deepseek/deepseek-v4-flash")
+  recoveryKey              String?
+  weeklySales              WeeklySale[]
+}
+
+model VerificationToken {
+  id      String   @id @default(uuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model PasswordResetToken {
+  id      String   @id @default(uuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model WeeklySale {
+  record_id                String   @id @default(uuid())
+  user_id                  String
+  date                     DateTime
+  weekly_sales             Float
+  primary_split_percentage Float    @default(60)
+  primary_share            Float
+  secondary_share          Float
+  primary_expenses         Float
+  expense_type             String?
+  primary_net_revenue      Float
+  notes                    String?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

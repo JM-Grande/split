@@ -1,0 +1,139 @@
+{
+  "name": "split",
+  "version": "1.0.0",
+  "description": "A local-first financial dashboard and ledger application.",
+  "author": "JM Grande",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JM-Grande/split.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JM-Grande/split/issues"
+  },
+  "homepage": "https://github.com/JM-Grande/split#readme",
+  "main": "electron-main.js",
+  "scripts": {
+    "dev": "npm rebuild better-sqlite3 && next dev",
+    "build": "next build",
+    "postbuild": "node scripts/patch-prisma-alias.js",
+    "start": "next start",
+    "desktop": "npx @electron/rebuild -f -w better-sqlite3 && electron .",
+    "dist": "npm run build && electron-builder",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepare": "husky",
+    "postinstall": "prisma generate && patch-package"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.65",
+    "@ai-sdk/react": "^3.0.193",
+    "@hookform/resolvers": "^5.4.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "ai": "^6.0.191",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.10.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.6",
+    "next-auth": "^5.0.0-beta.31",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-hook-form": "^7.76.1",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.4.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{js,jsx,mjs,cjs}": [
+      "eslint --fix"
+    ]
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/coverage-v8": "^4.1.7",
+    "electron": "^42.3.1",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.5",
+    "patch-package": "^8.0.1",
+    "prisma": "^7.8.0",
+    "shadcn": "^4.8.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.3",
+    "typescript": "^5",
+    "vitest": "^4.1.7"
+  },
+  "build": {
+    "appId": "com.split.app",
+    "productName": "Split",
+    "npmRebuild": false,
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "files": [
+      "**/*",
+      ".next/**/*",
+      "!.next/**/node_modules/**/*",
+      "!.next/cache/**/*",
+      "!prisma/dev.db",
+      "!prisma/dev.db-journal",
+      "!prisma/dev.db-wal",
+      "!prisma/dev.db-shm",
+      "prisma/template.db",
+      {
+        "from": "node_modules/.prisma/client/",
+        "to": "node_modules/.prisma/client/"
+      },
+      {
+        "from": "node_modules/@prisma/",
+        "to": "node_modules/@prisma/"
+      },
+      "!node_modules/electron/**/*",
+      "!node_modules/electron-builder/**/*",
+      "!node_modules/electron-builder-binaries/**/*",
+      {
+        "from": "node_modules/better-sqlite3-90e2652d1716b047/",
+        "to": "node_modules/better-sqlite3-90e2652d1716b047/"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "scripts/uninstaller.nsh"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "allowScripts": {
+    "better-sqlite3@12.10.0": true,
+    "electron@42.3.0": true
+  }
+}
