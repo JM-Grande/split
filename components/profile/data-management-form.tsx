@@ -108,7 +108,7 @@ export function DataManagementForm() {
           <div className="p-4 rounded-xl border border-border bg-muted/20 text-xs text-muted-foreground flex gap-2.5">
             <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>
-              Exports all logged weeks, operational notes, and share breakdowns into a standard JSON file format.
+              Exports all logged weeks, operational notes, share breakdowns, and your user preferences into a standard JSON file format.
             </span>
           </div>
         </CardContent>

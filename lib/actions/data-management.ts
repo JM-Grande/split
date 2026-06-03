@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createWeeklySale, WeeklySale } from "@/lib/domain/sales";
 import { salesRepository } from "@/lib/repositories/sales";
+import prisma from "@/lib/prisma";
 
 const weeklySaleImportSchema = z.object({
   date: z.string().or(z.date()).transform((val) => new Date(val)),
@@ -15,16 +16,26 @@ const weeklySaleImportSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
-const importSchema = z.array(weeklySaleImportSchema);
+const importSchema = z.union([
+  z.array(weeklySaleImportSchema),
+  z.object({
+    settings: z.object({
+      default_split_percentage: z.number().min(1).max(100).optional(),
+      aiModel: z.string().optional()
+    }).optional(),
+    sales: z.array(weeklySaleImportSchema)
+  })
+]);
 
 export async function exportDataAction() {
   try {
     const userId = await requireAuth();
 
     const sales = await salesRepository.getAllSales(userId);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     // Map Domain models back to export format for CSV
-    const exportData = sales.map(s => ({
+    const salesData = sales.map(s => ({
       date: s.date.toISOString(),
       weekly_sales: s.grossSales,
       primary_split_percentage: s.primarySplitPercentage,
@@ -36,6 +47,14 @@ export async function exportDataAction() {
       notes: s.notes,
     }));
 
+    const exportData = {
+      settings: {
+        default_split_percentage: user?.default_split_percentage ?? 60,
+        aiModel: user?.aiModel ?? "deepseek/deepseek-v4-flash"
+      },
+      sales: salesData
+    };
+
     return { success: true, message: "Data exported successfully.", data: exportData };
   } catch (error) {
     console.error("Export data error:", error);
@@ -43,7 +62,7 @@ export async function exportDataAction() {
   }
 }
 
-export async function importDataAction(rawImportData: unknown[], clearExisting: boolean = false) {
+export async function importDataAction(rawImportData: unknown, clearExisting: boolean = false) {
   try {
     const userId = await requireAuth();
 
@@ -57,7 +76,9 @@ export async function importDataAction(rawImportData: unknown[], clearExisting: 
       };
     }
 
-    const records = validated.data;
+    const parsedData = validated.data;
+    const records = Array.isArray(parsedData) ? parsedData : parsedData.sales;
+    const settings = !Array.isArray(parsedData) ? parsedData.settings : undefined;
 
     if (records.length === 0) {
       return { success: false, error: "No records found in the import file." };
@@ -95,6 +116,18 @@ export async function importDataAction(rawImportData: unknown[], clearExisting: 
 
     // 3. Persist via repository
     const insertedCount = await salesRepository.bulkInsertSales(userId, validSales, clearExisting);
+
+    // 4. Restore user settings if present
+    if (settings && (settings.default_split_percentage !== undefined || settings.aiModel !== undefined)) {
+      const dataToUpdate: { default_split_percentage?: number; aiModel?: string } = {};
+      if (settings.default_split_percentage !== undefined) dataToUpdate.default_split_percentage = settings.default_split_percentage;
+      if (settings.aiModel !== undefined) dataToUpdate.aiModel = settings.aiModel;
+      
+      await prisma.user.update({
+        where: { id: userId },
+        data: dataToUpdate
+      });
+    }
 
     revalidatePath("/profile");
     revalidatePath("/sales");
