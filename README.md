@@ -4,6 +4,14 @@ Split is a modern, local-first financial dashboard and ledger application design
 
 Built on Next.js and packaged as a standalone Windows desktop app via Electron, this application uses a completely local SQLite database, giving you 100% control over your data without relying on any external cloud providers or database services.
 
+## Screenshots
+
+<div align="center">
+  <img src="assets/dashboard.png" width="48%" alt="Financial Overview Dashboard" />
+  <img src="assets/sales-log.png" width="48%" alt="Weekly Sales Log" />
+  <img src="assets/split-ai.png" width="48%" alt="Split AI Entry" />
+  <img src="assets/sales-preferences.png" width="48%" alt="Sales Preferences" />
+</div>
 ## Features
 
 - **Local-First Architecture:** Powered by a local SQLite database using Prisma. No cloud dependencies required.
