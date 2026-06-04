@@ -11,6 +11,7 @@ Built on Next.js and packaged as a standalone Windows desktop app via Electron, 
   <img src="assets/sales-log.png" width="48%" alt="Weekly Sales Log" />
   <img src="assets/split-ai.png" width="48%" alt="Split AI Entry" />
   <img src="assets/sales-preferences.png" width="48%" alt="Sales Preferences" />
+  <img src="assets/api-key.png" width="48%" alt="API Key Configuration" />
 </div>
 ## Features
 

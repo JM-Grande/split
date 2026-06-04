@@ -7,7 +7,7 @@ const adapter = new PrismaBetterSqlite3({ url: "dev.db" });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = 'admin@splitledger.com';
+  const email = 'admin@example.com';
   // Generating a secure, random 12-character password
   const randomSuffix = Math.random().toString(36).slice(-6);
   const plainTextPassword = `Admin${randomSuffix}!`;

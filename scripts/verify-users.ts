@@ -3,9 +3,9 @@ import prisma from "../lib/prisma";
 
 async function main() {
   const usersToVerify = [
-    "admin@splitledger.com",
-    "grandejmbusiness@gmail.com",
-    "test2@gmail.com",
+    "admin@example.com",
+    "user@example.com",
+    "test2@example.com",
   ];
 
   for (const email of usersToVerify) {
