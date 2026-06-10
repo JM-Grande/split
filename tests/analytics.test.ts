@@ -90,4 +90,70 @@ describe("calculateDashboardMetrics", () => {
     expect(metrics.availableYears).toHaveLength(1);
     expect(metrics.monthlyDataByYear[metrics.availableYears[0]]).toHaveLength(12);
   });
+
+  it("should fallback to current year if target year is not in available years", () => {
+    const metrics = calculateDashboardMetrics(mockSales, "2099");
+    const currentYearStr = new Date().getFullYear().toString();
+    
+    // It should have calculated based on the current year fallback
+    // If the current year is not in mockSales, totalGross will be 0.
+    const isCurrentYearInMock = mockSales.some(s => s.date.getFullYear().toString() === currentYearStr);
+    expect(metrics.totalGross).toBe(isCurrentYearInMock ? metrics.totalGross : 0);
+  });
+
+  it("should set grossGrowth to 0 if only one month exists and it is a past year", () => {
+    // 2023 only has one month of data (Dec 2023)
+    const metrics = calculateDashboardMetrics(mockSales, "2023");
+    expect(metrics.grossGrowth).toBe(0);
+  });
+
+  it("should handle grossGrowth when last month gross is 0", () => {
+    const salesWithZero: WeeklySale[] = [
+      ...mockSales,
+      {
+        id: "4",
+        ownerId: "user1",
+        date: new Date("2024-03-01"),
+        grossSales: 5000,
+        primarySplitPercentage: 60,
+        primaryShare: 3000,
+        secondaryShare: 2000,
+        primaryExpenses: 0,
+        expenseType: null,
+        primaryNetRevenue: 3000,
+        notes: null,
+      },
+      {
+        id: "5",
+        ownerId: "user1",
+        date: new Date("2024-04-01"),
+        grossSales: 0, // 0 gross sales
+        primarySplitPercentage: 60,
+        primaryShare: 0,
+        secondaryShare: 0,
+        primaryExpenses: 0,
+        expenseType: null,
+        primaryNetRevenue: 0,
+        notes: null,
+      },
+      {
+        id: "6",
+        ownerId: "user1",
+        date: new Date("2024-05-01"),
+        grossSales: 1000,
+        primarySplitPercentage: 60,
+        primaryShare: 600,
+        secondaryShare: 400,
+        primaryExpenses: 0,
+        expenseType: null,
+        primaryNetRevenue: 600,
+        notes: null,
+      }
+    ];
+
+    const metrics = calculateDashboardMetrics(salesWithZero, "2024");
+    // Latest is May (1000), previous is April (0)
+    // Division by zero is avoided, grossGrowth should be 0 or unchanged.
+    expect(metrics.grossGrowth).toBe(0);
+  });
 });

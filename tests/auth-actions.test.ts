@@ -123,6 +123,16 @@ describe('Auth Server Actions', () => {
       const result = await changePasswordAction(null, formData);
       expect(result).toEqual({ success: false, error: 'Incorrect current password.' });
     });
+
+    it('should catch errors and return a generic error message', async () => {
+      const formData = new FormData();
+      formData.append('currentPassword', 'oldPass123');
+      formData.append('newPassword', 'newPass1234');
+      formData.append('confirmPassword', 'newPass1234');
+      (auth as Mock).mockRejectedValueOnce(new Error('Test error'));
+      const result = await changePasswordAction(null, formData);
+      expect(result).toEqual({ success: false, error: 'Something went wrong.' });
+    });
   });
 
   describe('deleteAccountAction', () => {
@@ -198,9 +208,46 @@ describe('Auth Server Actions', () => {
       expect(result).toEqual({ success: false, error: 'Something went wrong.' });
       expect(prisma.user.delete).not.toHaveBeenCalled();
     });
+
+    it('should return error when user is not found', async () => {
+      const formData = new FormData();
+      formData.append('password', 'correctPassword');
+      formData.append('confirmPassword', 'correctPassword');
+
+      (auth as Mock).mockResolvedValueOnce({ user: { id: 'user-1' } });
+      (prisma.user.findUnique as Mock).mockResolvedValueOnce(null);
+
+      const result = await deleteAccountAction(null, formData);
+
+      expect(result).toEqual({ success: false, error: 'User not found.' });
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('should rethrow AuthError from catch block', async () => {
+      const formData = new FormData();
+      formData.append('password', 'correctPassword');
+      formData.append('confirmPassword', 'correctPassword');
+
+      (auth as Mock).mockResolvedValueOnce({ user: { id: 'user-1' } });
+      (prisma.user.findUnique as Mock).mockImplementationOnce(() => {
+        throw new MockAuthError('Auth failed');
+      });
+
+      await expect(deleteAccountAction(null, formData)).rejects.toThrow('Auth failed');
+    });
   });
 
   describe('forgotPasswordAction', () => {
+    it('should return error if validation fails', async () => {
+      const formData = new FormData();
+      formData.append('email', 'not-an-email');
+      formData.append('recoveryKey', '');
+      
+      const result = await forgotPasswordAction(null, formData);
+      
+      expect(result).toEqual({ success: false, error: 'Invalid email or recovery key.' });
+    });
+
     it('should return error if user does not exist or recovery key is wrong', async () => {
       const formData = new FormData();
       formData.append('email', 'nonexistent@example.com');
@@ -305,6 +352,64 @@ describe('Auth Server Actions', () => {
       
       expect(result).toMatchObject({ error: 'Invalid fields.', details: { confirmPassword: expect.any(Array) } });
       expect(prisma.passwordResetToken.findUnique).not.toHaveBeenCalled();
+    });
+    it('should return error if token is invalid (not found)', async () => {
+      const formData = new FormData();
+      formData.append('token', 'invalid-token');
+      formData.append('newPassword', 'newPassword123');
+      formData.append('confirmPassword', 'newPassword123');
+
+      (prisma.passwordResetToken.findUnique as Mock).mockResolvedValueOnce(null);
+
+      const result = await resetPasswordAction(null, formData);
+
+      expect(result).toEqual({ success: false, error: 'Invalid token.' });
+    });
+
+    it('should return error if user is not found during reset', async () => {
+      const formData = new FormData();
+      formData.append('token', 'valid-token');
+      formData.append('newPassword', 'newPassword123');
+      formData.append('confirmPassword', 'newPassword123');
+      
+      const futureDate = new Date(Date.now() + 100000);
+      (prisma.passwordResetToken.findUnique as Mock).mockResolvedValueOnce({ 
+        id: 'token-1', 
+        email: 'nonexistent@example.com', 
+        token: 'valid-token', 
+        expires: futureDate 
+      });
+      (prisma.user.findUnique as Mock).mockResolvedValueOnce(null);
+      
+      const result = await resetPasswordAction(null, formData);
+      
+      expect(result).toEqual({ success: false, error: 'User not found.' });
+    });
+  });
+
+  describe('generateRecoveryKeyAction', () => {
+    it('should successfully generate and update a recovery key', async () => {
+      (auth as Mock).mockResolvedValueOnce({ user: { id: 'user-1' } });
+      (bcrypt.hash as Mock).mockResolvedValueOnce('hashedKey123');
+      (prisma.user.update as Mock).mockResolvedValueOnce({ id: 'user-1' });
+
+      // We need to dynamic import so we can mock crypto if we want, but since crypto is native 
+      // we just expect the result.success.
+      const { generateRecoveryKeyAction } = await import('@/lib/actions/auth');
+      const result = await generateRecoveryKeyAction();
+
+      expect(result.success).toBe(true);
+      expect(typeof result.recoveryKey).toBe('string');
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
+
+    it('should return error if an exception occurs', async () => {
+      (auth as Mock).mockRejectedValueOnce(new Error('Auth failed'));
+
+      const { generateRecoveryKeyAction } = await import('@/lib/actions/auth');
+      const result = await generateRecoveryKeyAction();
+
+      expect(result).toEqual({ success: false, error: 'Something went wrong.' });
     });
   });
 });

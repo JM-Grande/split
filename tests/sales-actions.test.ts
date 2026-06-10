@@ -97,6 +97,25 @@ describe('createSalesEntry', () => {
     });
   });
 
+  it('should return error if domain validation fails', async () => {
+    const inputData = {
+      date: new Date('2026-05-13'),
+      weekly_sales: 1000,
+      split_percentage: 60,
+      primary_expenses: 100,
+    };
+
+    const domainSales = await import('@/lib/domain/sales');
+    const spy = vi.spyOn(domainSales, 'createWeeklySale').mockReturnValue({ success: false, error: 'Domain Error' });
+
+    const result = await createSalesEntry(inputData as never);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Domain Error');
+    expect(salesRepository.createSale).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it('should return error if validation fails', async () => {
     const inputData = {
       date: 'invalid-date' as unknown as Date,
@@ -148,6 +167,9 @@ describe('updateSalesEntry', () => {
 
     const result = await updateSalesEntry('record-123', inputData);
 
+    if (!result.success) {
+      console.log('UPDATE FAILED WITH ERROR:', result.error);
+    }
     expect(result.success).toBe(true);
     expect(requireAuth).toHaveBeenCalled();
     expect(salesRepository.updateSale).toHaveBeenCalledWith('record-123', userId, {
@@ -165,6 +187,25 @@ describe('updateSalesEntry', () => {
     });
     expect(revalidatePath).toHaveBeenCalledWith('/sales');
     expect(revalidatePath).toHaveBeenCalledWith('/');
+  });
+
+  it('should return error if domain validation fails on update', async () => {
+    const inputData = {
+      date: new Date('2026-05-20'),
+      weekly_sales: 2000,
+      split_percentage: 60,
+      primary_expenses: 200,
+    };
+
+    const domainSales = await import('@/lib/domain/sales');
+    const spy = vi.spyOn(domainSales, 'createWeeklySale').mockReturnValue({ success: false, error: 'Domain Error' });
+
+    const result = await updateSalesEntry('record-123', inputData as never);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Domain Error');
+    expect(salesRepository.updateSale).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('should return error if update validation fails', async () => {

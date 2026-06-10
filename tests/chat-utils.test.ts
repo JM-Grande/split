@@ -36,6 +36,25 @@ describe('Chat Utilities', () => {
       });
     });
 
+    it('should handle parts without text property gracefully', () => {
+      const messages: UIMessage[] = [
+        { 
+          role: 'user', 
+          parts: [
+            { type: 'text', text: 'Hello' },
+            { type: 'image' } // Missing text property
+          ] 
+        }
+      ];
+      
+      const result = mapUIMessagesToOpenAI(messages);
+      
+      expect(result[0]).toEqual({
+        role: 'user',
+        content: 'Hello\n'
+      });
+    });
+
     it('should convert data role to user role', () => {
       const messages: UIMessage[] = [
         { role: 'data', content: 'Some data' }

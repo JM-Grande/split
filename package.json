@@ -132,6 +132,11 @@
       "target": "dmg"
     }
   },
+  "overrides": {
+    "postcss": "^8.5.14",
+    "hono": "^4.12.21",
+    "@hono/node-server": "^1.19.14"
+  },
   "allowScripts": {
     "better-sqlite3@12.10.0": true,
     "electron@42.3.0": true

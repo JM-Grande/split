@@ -1,5 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { getInitials } from "../lib/utils";
+import { getInitials, cn } from "../lib/utils";
+
+describe("cn", () => {
+  it("should merge class names correctly", () => {
+    expect(cn("px-2 py-1", "bg-red-500")).toBe("px-2 py-1 bg-red-500");
+  });
+
+  it("should handle conditional class names", () => {
+    expect(cn("px-2 py-1", true && "bg-red-500", false && "text-white")).toBe("px-2 py-1 bg-red-500");
+  });
+
+  it("should correctly resolve tailwind conflicts", () => {
+    expect(cn("px-2", "px-4")).toBe("px-4");
+  });
+});
 
 describe("getInitials", () => {
   it("should return 'U' if no name is provided", () => {

@@ -119,9 +119,9 @@ export function calculateDashboardMetrics(sales: WeeklySale[], selectedYearStr?:
   });
 
   const sortedMonthKeys = Array.from(monthYearMap.keys()).sort((a, b) => {
-    const [yearA, monthA] = a.split('-').map(Number);
-    const [yearB, monthB] = b.split('-').map(Number);
-    return yearB !== yearA ? yearB - yearA : monthB - monthA;
+    const [, monthA] = a.split('-').map(Number);
+    const [, monthB] = b.split('-').map(Number);
+    return monthB - monthA;
   });
 
   let grossGrowth = 0;

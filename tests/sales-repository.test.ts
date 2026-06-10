@@ -144,9 +144,44 @@ describe('PrismaSalesRepository', () => {
     });
   });
 
-  it('bulkInsertSales calls transaction and createMany with correct data', async () => {
-    const input: WeeklySale[] = [{
-      ownerId: userId,
+  it('getSalesByDateRange calls prisma.weeklySale.findMany with correct date filters', async () => {
+    const mockSales = [{ record_id: '1' }] as PrismaWeeklySale[];
+    vi.mocked(prisma.weeklySale.findMany).mockResolvedValue(mockSales);
+
+    const startDate = new Date('2026-01-01');
+    const endDate = new Date('2026-01-31');
+    const result = await repository.getSalesByDateRange(userId, startDate, endDate);
+
+    expect(result[0].id).toBe('1');
+    expect(prisma.weeklySale.findMany).toHaveBeenCalledWith({
+      where: {
+        user_id: userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
+  });
+
+  it('getRecentSales calls prisma.weeklySale.findMany with correct limit', async () => {
+    const mockSales = [{ record_id: '1' }] as PrismaWeeklySale[];
+    vi.mocked(prisma.weeklySale.findMany).mockResolvedValue(mockSales);
+
+    const result = await repository.getRecentSales(userId, 5);
+
+    expect(result[0].id).toBe('1');
+    expect(prisma.weeklySale.findMany).toHaveBeenCalledWith({
+      where: { user_id: userId },
+      orderBy: { date: 'desc' },
+      take: 5,
+    });
+  });
+
+  it('createSale throws error if ownerId is missing', async () => {
+    const input: WeeklySale = {
+      // ownerId intentionally omitted or undefined
       date: new Date(),
       grossSales: 100,
       primarySplitPercentage: 60,
@@ -156,22 +191,59 @@ describe('PrismaSalesRepository', () => {
       expenseType: null,
       primaryNetRevenue: 50,
       notes: null,
-    }];
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
-      const txMock = {
-        weeklySale: {
-          deleteMany: vi.fn(),
-          createMany: vi.fn().mockResolvedValue({ count: 1 })
-        }
-      };
-      await cb(txMock);
+    };
+
+    await expect(repository.createSale(input)).rejects.toThrow("WeeklySale must have an ownerId to be persisted.");
+  });
+
+    it('bulkInsertSales calls transaction and createMany with correct data', async () => {
+      const input: WeeklySale[] = [{
+        ownerId: userId,
+        date: new Date(),
+        grossSales: 100,
+        primarySplitPercentage: 60,
+        primaryShare: 60,
+        secondaryShare: 40,
+        primaryExpenses: 10,
+        expenseType: null,
+        primaryNetRevenue: 50,
+        notes: null,
+      }];
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
+        const txMock = {
+          weeklySale: {
+            deleteMany: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 1 })
+          }
+        };
+        await cb(txMock);
+      });
+  
+      const count = await repository.bulkInsertSales(userId, input, true);
+  
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(count).toBe(1);
     });
 
-    const count = await repository.bulkInsertSales(userId, input, true);
-
-    expect(prisma.$transaction).toHaveBeenCalled();
-    expect(count).toBe(1);
+    it('bulkInsertSales does not call deleteMany when clearExisting is false', async () => {
+      const input: WeeklySale[] = [];
+      let deleteManyMock!: ReturnType<typeof vi.fn>;
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
+        deleteManyMock = vi.fn();
+        const txMock = {
+          weeklySale: {
+            deleteMany: deleteManyMock,
+            createMany: vi.fn().mockResolvedValue({ count: 0 })
+          }
+        };
+        await cb(txMock);
+      });
+  
+      await repository.bulkInsertSales(userId, input, false);
+      expect(deleteManyMock).not.toHaveBeenCalled();
+    });
   });
-});

@@ -80,6 +80,30 @@ describe('Chat API Integration', () => {
       expect(text).toContain('Invalid Responses API request');
     });
 
+    it('should return fallback error message and status 400 if AI provider throws an APICallError without message and status', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).mockResolvedValue({ user: { id: 'test-user', email: 'test@example.com' }, expires: '1' });
+      
+      const aiError = new Error(''); // Empty message
+      aiError.name = 'APICallError';
+      // No statusCode
+      
+      mockStreamText.mockImplementationOnce(() => {
+        throw aiError;
+      });
+
+      const request = new Request('http://localhost:3000/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'test' }] })
+      });
+
+      const response = await POST(request);
+      
+      expect(response.status).toBe(400);
+      const text = await response.text();
+      expect(text).toContain('AI Provider Error');
+    });
+
     it('should return 500 for generic internal errors', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (auth as any).mockResolvedValue({ user: { id: 'test-user', email: 'test@example.com' }, expires: '1' });

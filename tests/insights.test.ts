@@ -89,6 +89,32 @@ describe("generateInsights", () => {
     expect(drop?.message).toContain("investigate");
   });
 
+  it("should not detect a drop if recentAvg is not significantly lower", () => {
+    const sales = Array.from({ length: 8 }).map((_, i) => 
+      createMockSale({ date: new Date(`2026-01-${i + 1}`), grossSales: 10000 })
+    );
+    const recentSales = Array.from({ length: 4 }).map((_, i) => 
+      createMockSale({ date: new Date(`2026-03-${i + 1}`), grossSales: 9000 })
+    ); // Only 10% drop, not 15%+
+    
+    const allSales = [...sales, ...recentSales];
+    const insights = generateInsights(allSales);
+    expect(insights.find(i => i.type === "comparison")).toBeUndefined();
+  });
+
+  it("should not detect a drop if historicalAvg is 0", () => {
+    const sales = Array.from({ length: 8 }).map((_, i) => 
+      createMockSale({ date: new Date(`2026-01-${i + 1}`), grossSales: 0 })
+    );
+    const recentSales = Array.from({ length: 4 }).map((_, i) => 
+      createMockSale({ date: new Date(`2026-03-${i + 1}`), grossSales: 5000 })
+    );
+    
+    const allSales = [...sales, ...recentSales];
+    const insights = generateInsights(allSales);
+    expect(insights.find(i => i.type === "comparison")).toBeUndefined();
+  });
+
   it("should limit the output to top 4 most severe insights", () => {
     // We construct a scenario with 1 drop (warning), 1 spike (warning), 1 streak (success), 1 milestone (success), plus health
     const sales = [
@@ -124,5 +150,42 @@ describe("generateInsights", () => {
     expect(health).toBeDefined();
     expect(health?.severity).toBe("success");
     expect(health?.message).toContain("10%");
+  });
+
+  it("should not generate milestone insight if there is only 1 sale", () => {
+    const sales = [createMockSale({ date: new Date("2026-01-01"), grossSales: 4000 })];
+    const insights = generateInsights(sales);
+    const milestone = insights.find(i => i.type === "milestone");
+    expect(milestone).toBeUndefined();
+  });
+
+  it("should format unspecified expenses correctly in anomaly insight", () => {
+    const sales = [
+      createMockSale({ date: new Date("2026-01-01"), primaryExpenses: 500 }),
+      createMockSale({ date: new Date("2026-01-08"), primaryExpenses: 600 }),
+      createMockSale({ date: new Date("2026-01-15"), primaryExpenses: 550 }),
+      // High expense with no expenseType
+      createMockSale({ date: new Date("2026-01-22"), primaryExpenses: 2500, expenseType: null }),
+    ];
+    
+    const insights = generateInsights(sales);
+    const anomaly = insights.find(i => i.type === "anomaly");
+    
+    expect(anomaly).toBeDefined();
+    expect(anomaly?.message).toContain("unspecified expenses");
+  });
+
+  it("should flag health insight as warning if expense ratio is >= 30%", () => {
+    const sales = [
+      // Ratio will be 400 / 1000 = 40%
+      createMockSale({ date: new Date("2026-01-01"), grossSales: 1000, primaryExpenses: 400 }),
+    ];
+    
+    const insights = generateInsights(sales);
+    const health = insights.find(i => i.type === "health");
+    
+    expect(health).toBeDefined();
+    expect(health?.severity).toBe("warning");
+    expect(health?.message).toContain("40%");
   });
 });

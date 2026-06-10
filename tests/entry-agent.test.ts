@@ -185,4 +185,145 @@ describe("parseEntryFromText", () => {
 
     expect(result.notes).toBe("2 machines were down on Tuesday");
   });
+
+  it("adds warning if there is a duplicate entry in the same week", async () => {
+    // recentSales has an entry on 2026-05-12 (Tuesday). 
+    // We pass a date of 2026-05-15 (Friday in same week).
+    mockGenerateText.mockResolvedValue({
+      text: JSON.stringify({
+        grossSales: 5000,
+        expenses: 0,
+        expenseType: null,
+        date: "2026-05-15",
+        notes: null,
+      }),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const result = await parseEntryFromText("user-1", "Sales 5000 on May 15", recentSales);
+
+    expect(result.warnings.some((w) => /already have an entry for this week/i.test(w))).toBe(true);
+  });
+
+  it("handles Sunday correctly in week calculation (duplicate check)", async () => {
+    // 2026-05-17 is a Sunday. It belongs to the week starting Monday, 2026-05-11.
+    // 2026-05-12 is in the same week.
+    mockGenerateText.mockResolvedValue({
+      text: JSON.stringify({
+        grossSales: 5000,
+        expenses: 0,
+        expenseType: null,
+        date: "2026-05-17",
+        notes: null,
+      }),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const result = await parseEntryFromText("user-1", "Sales 5000 on May 17", recentSales);
+
+    expect(result.warnings.some((w) => /already have an entry for this week/i.test(w))).toBe(true);
+  });
+
+  it("should append EXISTING DRAFT to prompt when currentEntry is provided", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: JSON.stringify({
+        grossSales: 5000,
+        expenses: 100,
+        expenseType: "Supplies",
+        date: null,
+        notes: null,
+      }),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const draft = {
+      grossSales: null,
+      expenses: 100,
+      expenseType: "Supplies",
+      date: null,
+      notes: null,
+      splitPercentage: null,
+      warnings: [],
+      isComplete: false
+    };
+
+    await parseEntryFromText("user-1", "sales are 5000", recentSales, 60, draft);
+
+    expect(mockGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.stringContaining("EXISTING DRAFT")
+          })
+        ])
+      })
+    );
+  });
+
+  it("should append ask_sales context when pendingQ is ask_sales", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: JSON.stringify({
+        grossSales: 5000,
+        expenses: 0,
+        expenseType: null,
+        date: null,
+        notes: null,
+      }),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const draft = {
+      grossSales: null,
+      expenses: 0,
+      expenseType: null,
+      date: null,
+      notes: null,
+      splitPercentage: null,
+      warnings: [],
+      isComplete: false
+    };
+
+    await parseEntryFromText("user-1", "5000", recentSales, 60, draft, "ask_sales");
+
+    expect(mockGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.stringContaining("Treat their message as the grossSales")
+          })
+        ])
+      })
+    );
+  });
+
+  it("should append confirm_no_expense context when pendingQ is confirm_no_expense", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: JSON.stringify({
+        grossSales: 5000,
+        expenses: 200,
+        expenseType: null,
+        date: null,
+        notes: null,
+      }),
+    } as Awaited<ReturnType<typeof generateText>>);
+
+    const draft = {
+      grossSales: 5000,
+      expenses: 0,
+      expenseType: null,
+      date: null,
+      notes: null,
+      splitPercentage: null,
+      warnings: [],
+      isComplete: false
+    };
+
+    await parseEntryFromText("user-1", "200", recentSales, 60, draft, "confirm_no_expense");
+
+    expect(mockGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.stringContaining("treat it as the expenses")
+          })
+        ])
+      })
+    );
+  });
 });

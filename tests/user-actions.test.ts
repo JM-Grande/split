@@ -138,5 +138,31 @@ describe('user actions', () => {
         },
       });
     });
+
+    it('should default aiModel to deepseek/deepseek-v4-flash if aiModel is empty', async () => {
+      vi.mocked(requireAuth).mockResolvedValue('test-user-id');
+      vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+      const result = await updateAiSettingsAction('key', '');
+
+      expect(result.success).toBe(true);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'test-user-id' },
+        data: { 
+          aiModel: 'deepseek/deepseek-v4-flash',
+          openrouterKey: 'encrypted-key'
+        },
+      });
+    });
+
+    it('should return error if database update fails', async () => {
+      vi.mocked(requireAuth).mockResolvedValue('test-user-id');
+      vi.mocked(prisma.user.update).mockRejectedValue(new Error('DB Error'));
+
+      const result = await updateAiSettingsAction('key', 'model');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to save AI settings.');
+    });
   });
 });

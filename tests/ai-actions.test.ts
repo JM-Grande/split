@@ -133,6 +133,28 @@ describe('AI Server Actions Integration', () => {
       );
     });
 
+    it('should fallback to "Active" if label is missing', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).mockResolvedValue({ user: { id: 'test-user' } });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockResolvedValue({ ok: true, json: async () => ({ data: {} }) });
+
+      const res = await testAiConnectionAction('raw-test-key');
+
+      expect(res.success).toBe(true);
+      expect(res.data).toBe('Active');
+    });
+
+    it('should return error if unauthorized in testAiConnectionAction', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).mockResolvedValue(null);
+
+      const res = await testAiConnectionAction('raw-test-key');
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('Unauthorized');
+    });
+
     it('should fetch and decrypt from DB if masked key is provided', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (auth as any).mockResolvedValue({ user: { id: 'test-user' } });
@@ -154,6 +176,18 @@ describe('AI Server Actions Integration', () => {
       );
     });
 
+    it('should return error if masked key is provided but no key in DB', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).mockResolvedValue({ user: { id: 'test-user' } });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (prisma.user.findUnique as any).mockResolvedValueOnce({ openrouterKey: null });
+
+      const res = await testAiConnectionAction('sk-or-v1-••••••••');
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('No API key found to test.');
+    });
+
     it('should fail if fetch fails', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (auth as any).mockResolvedValue({ user: { id: 'test-user' } });
@@ -164,6 +198,20 @@ describe('AI Server Actions Integration', () => {
 
       expect(res.success).toBe(false);
       expect(res.error).toMatch(/Invalid API key/);
+    });
+
+    it('should return network error if fetch throws an exception', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).mockResolvedValue({ user: { id: 'test-user' } });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global.fetch as any).mockImplementationOnce(() => {
+        throw new Error('Network error');
+      });
+
+      const res = await testAiConnectionAction('raw-test-key');
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('Connection failed. Check your network.');
     });
   });
 });

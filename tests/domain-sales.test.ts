@@ -46,6 +46,14 @@ describe('Sales Domain Module', () => {
     expect(result.success).toBe(false);
   });
 
+  it('returns an error for negative expenses', () => {
+    const result = createWeeklySale({ grossSales: 100, primaryExpenses: -50, primarySplitPercentage: 60 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe('Expenses cannot be negative.');
+    }
+  });
+
   it('returns an error for invalid split percentage', () => {
     const result = createWeeklySale({ grossSales: 100, primaryExpenses: 0, primarySplitPercentage: 150 });
     expect(result.success).toBe(false);
