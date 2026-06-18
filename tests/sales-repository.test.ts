@@ -221,13 +221,13 @@ describe('PrismaSalesRepository', () => {
         await cb(txMock);
       });
   
-      const count = await repository.bulkInsertSales(userId, input, true);
+      const count = await repository.bulkInsertSales(userId, input, 2026);
   
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(count).toBe(1);
     });
 
-    it('bulkInsertSales does not call deleteMany when clearExisting is false', async () => {
+    it('bulkInsertSales does not call deleteMany when clearExistingYear is undefined', async () => {
       const input: WeeklySale[] = [];
       let deleteManyMock!: ReturnType<typeof vi.fn>;
       
@@ -243,7 +243,7 @@ describe('PrismaSalesRepository', () => {
         await cb(txMock);
       });
   
-      await repository.bulkInsertSales(userId, input, false);
+      await repository.bulkInsertSales(userId, input, undefined);
       expect(deleteManyMock).not.toHaveBeenCalled();
     });
   });

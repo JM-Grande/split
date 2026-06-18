@@ -19,6 +19,9 @@ const weeklySaleImportSchema = z.object({
 const importSchema = z.union([
   z.array(weeklySaleImportSchema),
   z.object({
+    metadata: z.object({
+      year: z.string().or(z.number()).optional()
+    }).optional(),
     settings: z.object({
       default_split_percentage: z.number().min(1).max(100).optional(),
       aiModel: z.string().optional()
@@ -27,14 +30,17 @@ const importSchema = z.union([
   })
 ]);
 
-export async function exportDataAction() {
+export async function exportDataAction(year: number) {
   try {
     const userId = await requireAuth();
 
-    const sales = await salesRepository.getAllSales(userId);
+    // Fetch sales for that specific year using date range
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    const sales = await salesRepository.getSalesByDateRange(userId, startOfYear, endOfYear);
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    // Map Domain models back to export format for CSV
+    // Map Domain models back to export format
     const salesData = sales.map(s => ({
       date: s.date.toISOString(),
       weekly_sales: s.grossSales,
@@ -48,6 +54,9 @@ export async function exportDataAction() {
     }));
 
     const exportData = {
+      metadata: {
+        year: year.toString()
+      },
       settings: {
         default_split_percentage: user?.default_split_percentage ?? 60,
         aiModel: user?.aiModel ?? "deepseek/deepseek-v4-flash"
@@ -79,12 +88,39 @@ export async function importDataAction(rawImportData: unknown, clearExisting: bo
     const parsedData = validated.data;
     const records = Array.isArray(parsedData) ? parsedData : parsedData.sales;
     const settings = !Array.isArray(parsedData) ? parsedData.settings : undefined;
+    const metadata = !Array.isArray(parsedData) ? parsedData.metadata : undefined;
 
     if (records.length === 0) {
       return { success: false, error: "No records found in the import file." };
     }
 
-    // 2. Map through deep domain module to enforce invariants and recalculate splits
+    // 2. Determine target year
+    let targetYear: number;
+    if (metadata?.year) {
+      targetYear = typeof metadata.year === 'number' ? metadata.year : parseInt(metadata.year, 10);
+    } else {
+      // Infer year from the first sales record
+      const firstDate = records[0].date;
+      targetYear = firstDate.getFullYear();
+    }
+
+    // 3. Cross-validate that all records belong to the target year
+    const invalidDates = records.filter(record => {
+      const recDate = record.date;
+      return recDate.getFullYear() !== targetYear;
+    });
+
+    if (invalidDates.length > 0) {
+      return {
+        success: false,
+        error: `Import failed: file contains data for years other than the target year (${targetYear}).`,
+        details: [
+          `Target year is ${targetYear}, but found record(s) from other years.`
+        ]
+      };
+    }
+
+    // 4. Map through deep domain module to enforce invariants and recalculate splits
     const validSales: WeeklySale[] = [];
     const errors: string[] = [];
 
@@ -114,10 +150,10 @@ export async function importDataAction(rawImportData: unknown, clearExisting: bo
       };
     }
 
-    // 3. Persist via repository
-    const insertedCount = await salesRepository.bulkInsertSales(userId, validSales, clearExisting);
+    // 5. Persist via repository
+    const insertedCount = await salesRepository.bulkInsertSales(userId, validSales, clearExisting ? targetYear : undefined);
 
-    // 4. Restore user settings if present
+    // 6. Restore user settings if present
     if (settings && (settings.default_split_percentage !== undefined || settings.aiModel !== undefined)) {
       const dataToUpdate: { default_split_percentage?: number; aiModel?: string } = {};
       if (settings.default_split_percentage !== undefined) dataToUpdate.default_split_percentage = settings.default_split_percentage;

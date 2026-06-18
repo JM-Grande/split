@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { exportDataAction, importDataAction } from "@/lib/actions/data-management";
-import { Download, Upload, Database, RefreshCw, AlertTriangle } from "lucide-react";
+import { Download, Upload, Database, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export function DataManagementForm() {
+export function DataManagementForm({ availableYears = [] }: { availableYears?: number[] }) {
+  const defaultYear = availableYears.length > 0 ? availableYears[0] : new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<string>(defaultYear.toString());
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [clearExisting, setClearExisting] = useState(false);
@@ -17,16 +20,17 @@ export function DataManagementForm() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await exportDataAction();
+      const response = await exportDataAction(parseInt(selectedYear));
       if (response.success && response.data) {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data, null, 2));
         const downloadAnchor = document.createElement("a");
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `split-backup-${new Date().toISOString().split("T")[0]}.json`);
+        const currentDateStr = new Date().toISOString().split("T")[0];
+        downloadAnchor.setAttribute("download", `split_public_${selectedYear}_${currentDateStr}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
-        toast.success("Backup downloaded successfully!");
+        toast.success(`Backup for ${selectedYear} downloaded successfully!`);
       } else {
         toast.error(response.error || "Failed to export data.");
       }
@@ -54,14 +58,6 @@ export function DataManagementForm() {
       return;
     }
 
-    const confirmMessage = clearExisting 
-      ? "WARNING: This will delete ALL current sales entries and replace them with this backup. Are you sure you want to proceed?" 
-      : "This will merge the backup entries with your current log. Proceed?";
-
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
     setIsImporting(true);
     const reader = new FileReader();
 
@@ -75,7 +71,13 @@ export function DataManagementForm() {
           setSelectedFile(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
         } else {
-          toast.error(response.error || "Failed to import data.");
+          const errorMessage = response.error || "Failed to import data.";
+          const detailsMessage = response.details && response.details.length > 0
+            ? `\nDetails:\n${response.details.join("\n")}`
+            : "";
+          toast.error(`${errorMessage}${detailsMessage}`, {
+            duration: 8000
+          });
         }
       } catch {
         toast.error("Failed to parse JSON file. Ensure it is a valid Split backup.");
@@ -92,6 +94,8 @@ export function DataManagementForm() {
     reader.readAsText(selectedFile);
   };
 
+  const selectYearsList = availableYears.length > 0 ? availableYears : [new Date().getFullYear()];
+
   return (
     <div className="grid gap-6 md:grid-cols-2 w-full max-w-4xl mx-auto col-span-2">
       {/* Export Card */}
@@ -101,14 +105,32 @@ export function DataManagementForm() {
             <Download className="h-5 w-5 text-primary" /> Export Backup
           </CardTitle>
           <CardDescription>
-            Download your entire financial ledger history. Keep this file safe as a local backup.
+            Download your financial ledger history for a specific year. Keep this file safe as a local backup.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="export-year" className="text-xs font-semibold text-foreground">
+              Select Year
+            </label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger id="export-year" className="w-full h-9">
+                <SelectValue placeholder="Select a year" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {selectYearsList.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="p-4 rounded-xl border border-border bg-muted/20 text-xs text-muted-foreground flex gap-2.5">
             <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>
-              Exports all logged weeks, operational notes, share breakdowns, and your user preferences into a standard JSON file format.
+              Exports logged weeks, operational notes, share breakdowns, and your user preferences for the selected year into a standard JSON file format.
             </span>
           </div>
         </CardContent>
@@ -179,22 +201,15 @@ export function DataManagementForm() {
                 htmlFor="clearExisting"
                 className="text-xs font-semibold text-foreground cursor-pointer flex items-center gap-1.5"
               >
-                Clear current data before importing
+                Smart Clearing
               </label>
               <p className="text-[10px] text-muted-foreground leading-normal">
-                If checked, deletes all current sales entries from your database before restoring. (Warning: Permanent).
+                Only deletes sales for the imported year. Your other years are protected.
               </p>
             </div>
           </div>
 
-          {clearExisting && (
-            <div className="flex gap-2.5 p-3 rounded-xl border border-destructive/20 bg-destructive/5 text-[11px] text-destructive leading-normal">
-              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>
-                <strong>Destructive Operation:</strong> Checking this option will wipe your current records. Ensure you actually want to replace all current entries.
-              </span>
-            </div>
-          )}
+          {/* Alert removed as per request to keep cards aligned */}
         </CardContent>
         <CardFooter className="border-t border-border pt-4">
           <Button 

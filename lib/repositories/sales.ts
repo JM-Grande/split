@@ -46,7 +46,7 @@ export interface SalesRepository {
    * Bulk inserts multiple sales. Optionally clears existing sales for the user first.
    * Runs in a transaction.
    */
-  bulkInsertSales(userId: string, sales: WeeklySale[], clearExisting: boolean): Promise<number>;
+  bulkInsertSales(userId: string, sales: WeeklySale[], clearExistingYear?: number): Promise<number>;
 }
 
 function mapToDomain(dbSale: PrismaWeeklySale): WeeklySale {
@@ -153,12 +153,20 @@ export class PrismaSalesRepository implements SalesRepository {
     return mapToDomain(deleted);
   }
 
-  async bulkInsertSales(userId: string, sales: WeeklySale[], clearExisting: boolean): Promise<number> {
+  async bulkInsertSales(userId: string, sales: WeeklySale[], clearExistingYear?: number): Promise<number> {
     let count = 0;
     await prisma.$transaction(async (tx) => {
-      if (clearExisting) {
+      if (clearExistingYear !== undefined) {
+        const startOfYear = new Date(clearExistingYear, 0, 1);
+        const endOfYear = new Date(clearExistingYear, 11, 31, 23, 59, 59, 999);
         await tx.weeklySale.deleteMany({
-          where: { user_id: userId }
+          where: {
+            user_id: userId,
+            date: {
+              gte: startOfYear,
+              lte: endOfYear
+            }
+          }
         });
       }
 

@@ -27,6 +27,9 @@ export default async function ProfilePage() {
     prisma.user.findUnique({ where: { id: user.id } })
   ]);
   
+  const availableYears = Array.from(new Set(userSales.map(s => s.date.getFullYear()))).sort((a, b) => b - a);
+  const selectYears = availableYears.length > 0 ? availableYears : [new Date().getFullYear()];
+  
   const totalEntries = userSales.length;
   const totalGross = userSales.reduce((acc, sale) => acc + sale.grossSales, 0);
   const totalNet = userSales.reduce((acc, sale) => acc + sale.primaryNetRevenue, 0);
@@ -129,7 +132,7 @@ export default async function ProfilePage() {
               </TabsContent>
 
               <TabsContent value="data-management" className="space-y-6 animate-in fade-in-50 duration-500">
-                <DataManagementForm />
+                <DataManagementForm availableYears={selectYears} />
               </TabsContent>
             </Tabs>
           </div>

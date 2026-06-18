@@ -6,5 +6,5 @@ This project has specific guidelines and context documented in the `context/` di
 @./context/coding-standards.md
 @./context/current-feature.md
 @./context/DESIGN.md
-@./context/learnings.md
+@~/xvault\Learnings\learnings.md
 @./context/split-project-overview.md
