@@ -18,7 +18,7 @@ export function SummaryCards({ totalGross, netRevenue, partnerShare, totalExpens
   const blendedPartnerPercent = totalNetAndPartner > 0 ? (partnerShare / totalNetAndPartner) * 100 : 0;
 
   return (
-    <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={`grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 ${partnerShare > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
       <Card className="bg-card border-border shadow-none">
         <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 pb-2 sm:pb-2">
           <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -64,14 +64,14 @@ export function SummaryCards({ totalGross, netRevenue, partnerShare, totalExpens
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 min-w-0 flex-1 flex flex-col justify-between">
           <div 
-            className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-chart-2 tabular-nums truncate" 
+            className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-chart-4 tabular-nums truncate" 
             title={formatCurrency(totalExpenses)}
           >
             {formatCurrency(totalExpenses)}
           </div>
           <div className="mt-6 sm:mt-8">
             <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
-               <div className="h-full bg-chart-2 w-full rounded-full" />
+               <div className="h-full bg-chart-4 w-full rounded-full" />
             </div>
           </div>
         </CardContent>
@@ -98,26 +98,28 @@ export function SummaryCards({ totalGross, netRevenue, partnerShare, totalExpens
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border shadow-none flex flex-col justify-between">
-        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
-          <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Partner Share {totalNetAndPartner > 0 && <Badge variant="outline" className="bg-accent/50 text-muted-foreground border-border text-[10px] px-1 py-0 rounded-sm font-normal">Avg {Math.round(blendedPartnerPercent)}%</Badge>}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 min-w-0 flex-1 flex flex-col justify-between">
-          <div 
-            className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-chart-2 tabular-nums truncate" 
-            title={formatCurrency(partnerShare)}
-          >
-            {formatCurrency(partnerShare)}
-          </div>
-          <div className="mt-6 sm:mt-8">
-            <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
-               <div className="h-full bg-chart-2 rounded-full transition-all" style={{ width: `${blendedPartnerPercent}%` }} />
+      {partnerShare > 0 && (
+        <Card className="bg-card border-border shadow-none flex flex-col justify-between">
+          <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
+            <CardTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Partner Share {totalNetAndPartner > 0 && <Badge variant="outline" className="bg-accent/50 text-muted-foreground border-border text-[10px] px-1 py-0 rounded-sm font-normal">Avg {Math.round(blendedPartnerPercent)}%</Badge>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 min-w-0 flex-1 flex flex-col justify-between">
+            <div 
+              className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-chart-2 tabular-nums truncate" 
+              title={formatCurrency(partnerShare)}
+            >
+              {formatCurrency(partnerShare)}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-6 sm:mt-8">
+              <div className="h-1.5 w-full bg-accent rounded-full overflow-hidden">
+                 <div className="h-full bg-chart-2 rounded-full transition-all" style={{ width: `${blendedPartnerPercent}%` }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

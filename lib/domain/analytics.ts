@@ -6,8 +6,8 @@ export interface DashboardMetrics {
   partnerShare: number;
   totalExpenses: number;
   grossGrowth: number;
-  monthlyDataByYear: Record<string, { month: string; net: number; partner: number }[]>;
-  yearlyData: { year: string; net: number; partner: number }[];
+  monthlyDataByYear: Record<string, { month: string; net: number; partner: number; expenses: number; gross: number }[]>;
+  yearlyData: { year: string; net: number; partner: number; expenses: number; gross: number }[];
   availableYears: string[];
 }
 
@@ -21,12 +21,16 @@ const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "
  * @param selectedYearStr - Optional year string to filter YTD totals. Defaults to current year.
  * @returns Aggregated metrics for display
  */
-export function calculateDashboardMetrics(sales: WeeklySale[], selectedYearStr?: string): DashboardMetrics {
+export function calculateDashboardMetrics(
+  sales: WeeklySale[],
+  selectedYearStr?: string,
+  filterType: 'all' | 'solo' | 'split' = 'all'
+): DashboardMetrics {
   const currentYearStr = new Date().getFullYear().toString();
   const targetYearStr = selectedYearStr || currentYearStr;
 
   if (sales.length === 0) {
-    const emptyMonthlyData = MONTHS.map((month) => ({ month, net: 0, partner: 0 }));
+    const emptyMonthlyData = MONTHS.map((month) => ({ month, net: 0, partner: 0, expenses: 0, gross: 0 }));
     return {
       totalGross: 0,
       netRevenue: 0,
@@ -48,6 +52,15 @@ export function calculateDashboardMetrics(sales: WeeklySale[], selectedYearStr?:
   // Validate target year, fallback to current if not in data and not current
   const finalTargetYear = availableYears.includes(targetYearStr) ? targetYearStr : currentYearStr;
 
+  // Apply type filter
+  let filteredSales = sales;
+  if (filterType === 'solo') {
+    filteredSales = sales.filter(s => s.secondaryShare === 0);
+  } else if (filterType === 'split') {
+    filteredSales = sales.filter(s => s.secondaryShare > 0);
+  }
+  sales = filteredSales;
+
   // 1. Calculate Totals (Filtered by selected Year to Date)
   const ytdSales = sales.filter(s => s.date.getFullYear().toString() === finalTargetYear);
   const { totalGross, netRevenue, partnerShare, totalExpenses } = ytdSales.reduce(
@@ -62,13 +75,15 @@ export function calculateDashboardMetrics(sales: WeeklySale[], selectedYearStr?:
   );
 
   // 2. Yearly Aggregation (All Time)
-  const yearlyMap = new Map<string, { net: number; partner: number }>();
+  const yearlyMap = new Map<string, { net: number; partner: number; expenses: number; gross: number }>();
   sales.forEach((s) => {
     const year = s.date.getFullYear().toString();
-    const current = yearlyMap.get(year) || { net: 0, partner: 0 };
+    const current = yearlyMap.get(year) || { net: 0, partner: 0, expenses: 0, gross: 0 };
     yearlyMap.set(year, {
       net: current.net + s.primaryNetRevenue,
       partner: current.partner + s.secondaryShare,
+      expenses: current.expenses + s.primaryExpenses,
+      gross: current.gross + s.grossSales,
     });
   });
 
@@ -77,34 +92,40 @@ export function calculateDashboardMetrics(sales: WeeklySale[], selectedYearStr?:
       year,
       net: Math.round(data.net),
       partner: Math.round(data.partner),
+      expenses: Math.round(data.expenses),
+      gross: Math.round(data.gross),
     }))
     .sort((a, b) => a.year.localeCompare(b.year));
 
 
   // 3. Monthly Aggregation (All Years, All 12 Months)
-  const monthlyDataByYear: Record<string, { month: string; net: number; partner: number }[]> = {};
+  const monthlyDataByYear: Record<string, { month: string; net: number; partner: number; expenses: number; gross: number }[]> = {};
   
   availableYears.forEach(year => {
-    const monthlyMap = new Map<number, { net: number; partner: number }>();
+    const monthlyMap = new Map<number, { net: number; partner: number; expenses: number; gross: number }>();
     
     sales
       .filter((s) => s.date.getFullYear().toString() === year)
       .forEach((s) => {
         const month = s.date.getMonth();
-        const current = monthlyMap.get(month) || { net: 0, partner: 0 };
+        const current = monthlyMap.get(month) || { net: 0, partner: 0, expenses: 0, gross: 0 };
         monthlyMap.set(month, {
           net: current.net + s.primaryNetRevenue,
           partner: current.partner + s.secondaryShare,
+          expenses: current.expenses + s.primaryExpenses,
+          gross: current.gross + s.grossSales,
         });
       });
 
     const monthlyData = [];
     for (let i = 0; i < 12; i++) {
-      const data = monthlyMap.get(i) || { net: 0, partner: 0 };
+      const data = monthlyMap.get(i) || { net: 0, partner: 0, expenses: 0, gross: 0 };
       monthlyData.push({
         month: MONTHS[i],
         net: Math.round(data.net),
         partner: Math.round(data.partner),
+        expenses: Math.round(data.expenses),
+        gross: Math.round(data.gross),
       });
     }
     monthlyDataByYear[year] = monthlyData;

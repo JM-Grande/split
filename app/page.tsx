@@ -3,6 +3,7 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { DashboardYearFilter } from "@/components/dashboard/dashboard-year-filter";
+import { DashboardTypeFilter } from "@/components/dashboard/dashboard-type-filter";
 
 const PerformanceCharts = dynamic(
   () => import("@/components/dashboard/performance-charts").then((mod) => mod.PerformanceCharts)
@@ -28,6 +29,7 @@ export default async function Home(
 
   const searchParams = await props.searchParams;
   const yearQuery = typeof searchParams.year === 'string' ? searchParams.year : undefined;
+  const typeQuery = typeof searchParams.type === 'string' ? (searchParams.type as 'all' | 'solo' | 'split') : 'all';
   
   const [weeklySales, dbUser] = await Promise.all([
     salesRepository.getAllSales(session.user.id),
@@ -37,7 +39,7 @@ export default async function Home(
     })
   ]);
 
-  const metrics = calculateDashboardMetrics(weeklySales, yearQuery);
+  const metrics = calculateDashboardMetrics(weeklySales, yearQuery, typeQuery);
   const insights = generateInsights(weeklySales);
   
   const hasAiKey = !!dbUser?.openrouterKey;
@@ -59,6 +61,7 @@ export default async function Home(
               <p className="text-muted-foreground mt-1 sm:mt-2 text-sm">Track your global revenue and profit sharing.</p>
             </div>
             <div className="flex items-center gap-2">
+              <DashboardTypeFilter />
               <DashboardYearFilter 
                 availableYears={metrics.availableYears} 
                 defaultYear={new Date().getFullYear().toString()} 
@@ -75,7 +78,7 @@ export default async function Home(
             totalExpenses={metrics.totalExpenses}
             grossGrowth={metrics.grossGrowth}
           />
-          <Suspense fallback={<div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed text-muted-foreground">Loading charts...</div>}>
+          <Suspense fallback={<div className="flex h-[400px] items-center justify-center rounded-xl border border-dashed text-muted-foreground">Loading charts…</div>}>
             <PerformanceCharts 
               monthlyDataByYear={metrics.monthlyDataByYear}
               yearlyData={metrics.yearlyData}
