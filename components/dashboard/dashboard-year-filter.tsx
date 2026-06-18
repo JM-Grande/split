@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
@@ -20,10 +21,14 @@ export function DashboardYearFilter({ availableYears, defaultYear }: DashboardYe
   const searchParams = useSearchParams();
   const currentSelectedYear = searchParams.get("year") || defaultYear;
 
+  const [isPending, startTransition] = useTransition();
+
   const handleYearChange = (year: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("year", year);
-    router.push(`/?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/?${params.toString()}`);
+    });
   };
 
   if (availableYears.length === 0) return null;
@@ -32,9 +37,10 @@ export function DashboardYearFilter({ availableYears, defaultYear }: DashboardYe
     <Select 
       value={currentSelectedYear} 
       onValueChange={handleYearChange}
+      disabled={isPending}
     >
       <SelectTrigger 
-        className="w-[180px] bg-transparent border-border text-foreground hover:bg-accent/50 shadow-none"
+        className={`w-[180px] bg-transparent border-border text-foreground hover:bg-accent/50 shadow-none ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
         aria-label="Filter dashboard metrics by year"
       >
         <div className="flex items-center">

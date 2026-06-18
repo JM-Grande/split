@@ -64,8 +64,8 @@ describe("calculateDashboardMetrics", () => {
   it("should calculate yearly performance correctly across all years", () => {
     const metrics = calculateDashboardMetrics(mockSales, "2024");
     expect(metrics.yearlyData).toHaveLength(2);
-    expect(metrics.yearlyData).toContainEqual({ year: "2023", net: 2500, partner: 2000 });
-    expect(metrics.yearlyData).toContainEqual({ year: "2024", net: 15000, partner: 12000 });
+    expect(metrics.yearlyData).toContainEqual({ year: "2023", net: 2500, partner: 2000, expenses: 500, gross: 5000 });
+    expect(metrics.yearlyData).toContainEqual({ year: "2024", net: 15000, partner: 12000, expenses: 3000, gross: 30000 });
   });
 
   it("should calculate monthly performance correctly", () => {
@@ -155,5 +155,82 @@ describe("calculateDashboardMetrics", () => {
     // Latest is May (1000), previous is April (0)
     // Division by zero is avoided, grossGrowth should be 0 or unchanged.
     expect(metrics.grossGrowth).toBe(0);
+  });
+
+  it("should filter metrics by type correctly", () => {
+    const soloSales: WeeklySale[] = [
+      {
+        id: "10",
+        ownerId: "user1",
+        date: new Date("2024-01-01"),
+        grossSales: 10000,
+        primarySplitPercentage: 100,
+        primaryShare: 10000,
+        secondaryShare: 0,
+        primaryExpenses: 1000,
+        expenseType: "Electricity",
+        primaryNetRevenue: 9000,
+        notes: "Solo Sale",
+      },
+      {
+        id: "11",
+        ownerId: "user1",
+        date: new Date("2024-02-01"),
+        grossSales: 20000,
+        primarySplitPercentage: 60,
+        primaryShare: 12000,
+        secondaryShare: 8000,
+        primaryExpenses: 2000,
+        expenseType: "Rent",
+        primaryNetRevenue: 10000,
+        notes: "Split Sale",
+      }
+    ];
+
+    const metricsSolo = calculateDashboardMetrics(soloSales, "2024", "solo");
+    expect(metricsSolo.totalGross).toBe(10000);
+    expect(metricsSolo.netRevenue).toBe(9000);
+    expect(metricsSolo.partnerShare).toBe(0);
+    expect(metricsSolo.totalExpenses).toBe(1000);
+
+    const metricsSplit = calculateDashboardMetrics(soloSales, "2024", "split");
+    expect(metricsSplit.totalGross).toBe(20000);
+    expect(metricsSplit.netRevenue).toBe(10000);
+    expect(metricsSplit.partnerShare).toBe(8000);
+    expect(metricsSplit.totalExpenses).toBe(2000);
+  });
+
+  it("should not drop available years when filtering by type", () => {
+    const mixedSales: WeeklySale[] = [
+      {
+        id: "10",
+        ownerId: "user1",
+        date: new Date("2023-01-01"),
+        grossSales: 10000,
+        primarySplitPercentage: 100,
+        primaryShare: 10000,
+        secondaryShare: 0,
+        primaryExpenses: 1000,
+        expenseType: null,
+        primaryNetRevenue: 9000,
+        notes: "Solo 2023",
+      },
+      {
+        id: "11",
+        ownerId: "user1",
+        date: new Date("2024-02-01"),
+        grossSales: 20000,
+        primarySplitPercentage: 60,
+        primaryShare: 12000,
+        secondaryShare: 8000,
+        primaryExpenses: 2000,
+        expenseType: null,
+        primaryNetRevenue: 10000,
+        notes: "Split 2024",
+      }
+    ];
+    const metrics = calculateDashboardMetrics(mixedSales, "2024", "split");
+    expect(metrics.availableYears).toContain("2023");
+    expect(metrics.availableYears).toContain("2024");
   });
 });
