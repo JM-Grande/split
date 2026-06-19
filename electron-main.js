@@ -98,6 +98,7 @@ function createWindow(port) {
     },
     backgroundColor: '#111318', // Matching DESIGN.md base background
     title: 'Split',
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     show: false,
   });
 
