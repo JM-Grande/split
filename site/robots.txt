@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://split.pages.dev/sitemap.xml
+Sitemap: https://split-e3e.pages.dev/sitemap.xml
