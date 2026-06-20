@@ -23,7 +23,7 @@ First off, thank you for considering contributing to Split! We welcome contribut
    ```
 4. **Seed the Database (Optional)**:
    ```bash
-   npm run db:seed
+   npx prisma db seed
    ```
 5. **Run the Next.js Dev Server**:
    ```bash

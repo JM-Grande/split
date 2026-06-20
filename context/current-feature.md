@@ -11,7 +11,9 @@ Not Started
 
 ## References
 
+
 ## History
+- **2026-06-20: Docs and Screenshot Refresh**: Updated documentation files (README, CONTEXT, split-project-overview) to reflect shipped features (Solo Mode, Backup/Restore, Dashboard Filters, Recharts) and replaced dashboard screenshots with the latest UI.
 - **2026-06-20: Deepen Sales Log**: Refactored the Weekly Sale domain into a cohesive `SalesLog` module. Absorbed and deleted shallow `analytics.ts` and `insights.ts` modules. Consolidated all array-iteration logic and tests into a single, unified interface for the dashboard and AI agent.
 - **2026-06-19: Marketing Site**: Created a static, offline-capable marketing landing page deployed via Cloudflare Pages. Included custom SEO configuration, semantic HTML5, smooth scrolling, and app screenshots.
 - **2026-06-19: Application Icon Update**: Extracted and configured a new pie chart application icon for both Next.js App Router and the native Electron Builder packager, ensuring the icon reflects in taskbars, shortcuts, and installer files.
