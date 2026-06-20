@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { salesRepository } from "@/lib/repositories/sales";
+import { getNotesForPeriod } from "@/lib/domain/sales-log";
 import { parseEntryFromText, type ParsedEntry } from "@/lib/ai/entry-agent";
 import { generateText } from "ai";
 import { getAIConfig } from "@/lib/ai/provider";
@@ -46,7 +47,7 @@ export async function summarizeNotesAction(year: string, month: string): Promise
     const startDate = new Date(parseInt(year), parseInt(month), 1);
     const endDate = new Date(parseInt(year), parseInt(month) + 1, 0, 23, 59, 59, 999);
     const allSales = await salesRepository.getSalesByDateRange(userId, startDate, endDate);
-    const targetSales = allSales.filter(s => s.notes && s.notes.trim().length > 0);
+    const targetSales = getNotesForPeriod(allSales);
 
     if (targetSales.length === 0) {
       return { data: "No notable events or notes were recorded for this period." };

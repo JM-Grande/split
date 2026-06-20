@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InsightsPanel } from "@/components/dashboard/insights-panel";
 import { AiSummary } from "@/components/dashboard/ai-summary";
-import { Insight } from "@/lib/domain/insights";
+import { Insight } from "@/lib/domain/sales-log";
 import { BrainCircuit, Lightbulb, FileText } from "lucide-react";
 
 interface IntelligenceCenterProps {

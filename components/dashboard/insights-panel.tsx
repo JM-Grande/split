@@ -1,4 +1,4 @@
-import { Insight } from "@/lib/domain/insights";
+import { Insight } from "@/lib/domain/sales-log";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, AlertTriangle, Trophy, Lightbulb, Activity } from "lucide-react";
 
