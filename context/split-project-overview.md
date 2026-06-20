@@ -15,10 +15,13 @@
 - **Data Entry Form:** A simple input screen to log the date, weekly gross sales, expenses, and operational notes.
 - **AI Entry Agent:** Natural language processing that allows users to type "Sales this week were 5000, spent 300 on router repair" and automatically formats it into the database.
 - **Automated Split & Net Calculator:** Auto-calculates primary and secondary shares based on user-defined dynamic percentages. Expenses are deducted from the primary share to output the final net revenue.
+- **Solo Mode:** 100% split option that seamlessly adapts the entire UI for single-owner operations.
 - **Analytics Dashboard:** Monthly and yearly bar charts.
+- **Dashboard Type Filter:** Filter analytics by All, Solo, or Split sales records.
 - **AI Summaries:** Generates intelligent monthly summaries of operational notes to spot trends.
 - **Local AI Settings:** Users can provide their own OpenRouter API key and preferred model name, stored securely in the local SQLite database.
 - **Offline Account Recovery:** Offline recovery key system replacing traditional email-based password resets for maximum privacy.
+- **Year-by-Year Backup & Restore:** Export and import financial records safely by year, including user preferences.
 
 ## 4. DATA (Database & Prisma Schema)
 The architecture is entirely local-first, utilizing a local SQLite database file (`dev.db`).
@@ -87,6 +90,7 @@ Built entirely for privacy and speed on the user's local machine.
 - **Database:** Local SQLite (`@prisma/adapter-better-sqlite3`).
 - **Desktop Packaging:** Electron with `electron-builder`, utilizing `asar` packaging and automated GitHub Actions for Windows `.exe` releases.
 - **AI Integration:** Vercel AI SDK mapped to OpenRouter (DeepSeek/Gemini/Llama).
+- **Charts:** Recharts.
 - **Authentication & Security:** Auth.js (NextAuth v5) & Bcrypt (12) for secure local logins. Password reset flows run entirely locally via Recovery Keys (Resend was removed).
 
 ## 6. UI/UX

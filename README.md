@@ -18,11 +18,14 @@ Built on Next.js and packaged as a standalone Windows desktop app via Electron, 
 - **Local-First Architecture:** Powered by a local SQLite database using Prisma. No cloud dependencies required.
 - **Desktop Application:** Packaged as a standalone Windows executable (`.exe`) via Electron and `electron-builder`.
 - **Dynamic Revenue Splitting:** Automatic calculation of primary and secondary revenue splits based on configurable percentages.
+- **Solo Mode:** Run the app at 100% split for single-owner operations — the UI automatically adapts by hiding partner share fields.
 - **Financial Dashboard:** A beautiful, responsive interface for logging and analyzing weekly gross sales, expenses, and net revenue with automatic charting.
+- **Dashboard Filters:** Filter your analytics by sale type (All, Solo, Split) for focused analysis.
 - **AI Entry Agent:** Natural language processing allows you to log sales conversationally (e.g., "sales were 5k, spent 300 on router").
 - **AI Intelligence Center:** Automatically generates monthly summaries of operational notes to spot business trends.
 - **Secure AI Settings:** Plug in your own OpenRouter API key directly in your Profile page. It is stored securely and entirely locally.
 - **Built-in Authentication & Offline Recovery:** Fully localized authentication powered by Auth.js. Secures your account with an offline Recovery Key system instead of relying on external email providers.
+- **Year-by-Year Backup & Restore:** Export and import your financial data as JSON files, organized by year, with user preferences included.
 
 ## Tech Stack
 
@@ -34,6 +37,7 @@ Built on Next.js and packaged as a standalone Windows desktop app via Electron, 
 - **Authentication:** Auth.js (NextAuth.js v5)
 - **AI Integration:** Vercel AI SDK (with customizable OpenRouter models)
 - **Styling:** Tailwind CSS & shadcn/ui
+- **Charts:** Recharts
 
 ## Getting Started (Development)
 
@@ -56,7 +60,7 @@ npx prisma db push
 If you'd like to populate your local database with dummy data (sales records and test accounts) to test the UI:
 
 ```bash
-npm run db:seed
+npx prisma db seed
 ```
 *(Check `prisma/seed.ts` for the default admin credentials)*
 
@@ -74,7 +78,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. *(Note: For
 ```bash
 npm run desktop
 ```
-This boots the Next.js production build inside the native Electron shell.
+This launches the Electron dev shell with hot-reload.
 
 ### 5. Packaging for Production
 
