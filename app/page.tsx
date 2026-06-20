@@ -10,8 +10,7 @@ const PerformanceCharts = dynamic(
 );
 import { IntelligenceCenter } from "@/components/dashboard/intelligence-center";
 import { salesRepository } from "@/lib/repositories/sales";
-import { calculateDashboardMetrics } from "@/lib/domain/analytics";
-import { generateInsights } from "@/lib/domain/insights";
+import { getDashboardMetrics, getInsights } from "@/lib/domain/sales-log";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
@@ -39,8 +38,8 @@ export default async function Home(
     })
   ]);
 
-  const metrics = calculateDashboardMetrics(weeklySales, yearQuery, typeQuery);
-  const insights = generateInsights(weeklySales);
+  const metrics = getDashboardMetrics(weeklySales, yearQuery, typeQuery);
+  const insights = getInsights(weeklySales);
   
   const hasAiKey = !!dbUser?.openrouterKey;
 

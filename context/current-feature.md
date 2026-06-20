@@ -1,15 +1,20 @@
-# Current Feature
+# Deepen Sales Log
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
-<!-- Add goals for the current feature here -->
+- Deepen the Weekly Sale domain into a Sales Log module.
+- Absorb `analytics.ts` and `insights.ts` into a single `sales-log.ts` deep module.
+- Consolidate call sites and tests to use the single cohesive interface.
 
 ## Notes
-<!-- Add notes and context for the current feature here -->
+- `SalesLog` is a module of pure functions to match the functional nature of the codebase.
+- Replaces scattered array-iteration logic in server actions.
 
 ## References
+- [Implementation Plan](file:///C:/Users/anton/.gemini/antigravity/brain/1a872f12-5dab-46be-b740-9c19df61e000/implementation_plan.md)
+- `lib/domain/sales-log.ts` (to be created)
 
 ## History
 - **2026-06-19: Marketing Site**: Created a static, offline-capable marketing landing page deployed via Cloudflare Pages. Included custom SEO configuration, semantic HTML5, smooth scrolling, and app screenshots.
