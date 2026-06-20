@@ -1,22 +1,18 @@
-# Deepen Sales Log
+# Current Feature
 
 ## Status
-In Progress
+Not Started
 
 ## Goals
-- Deepen the Weekly Sale domain into a Sales Log module.
-- Absorb `analytics.ts` and `insights.ts` into a single `sales-log.ts` deep module.
-- Consolidate call sites and tests to use the single cohesive interface.
+<!-- Add goals for the current feature here -->
 
 ## Notes
-- `SalesLog` is a module of pure functions to match the functional nature of the codebase.
-- Replaces scattered array-iteration logic in server actions.
+<!-- Add notes and context for the current feature here -->
 
 ## References
-- [Implementation Plan](file:///C:/Users/anton/.gemini/antigravity/brain/1a872f12-5dab-46be-b740-9c19df61e000/implementation_plan.md)
-- `lib/domain/sales-log.ts` (to be created)
 
 ## History
+- **2026-06-20: Deepen Sales Log**: Refactored the Weekly Sale domain into a cohesive `SalesLog` module. Absorbed and deleted shallow `analytics.ts` and `insights.ts` modules. Consolidated all array-iteration logic and tests into a single, unified interface for the dashboard and AI agent.
 - **2026-06-19: Marketing Site**: Created a static, offline-capable marketing landing page deployed via Cloudflare Pages. Included custom SEO configuration, semantic HTML5, smooth scrolling, and app screenshots.
 - **2026-06-19: Application Icon Update**: Extracted and configured a new pie chart application icon for both Next.js App Router and the native Electron Builder packager, ensuring the icon reflects in taskbars, shortcuts, and installer files.
 - **2026-06-18: Analytics Dashboard Improvements**: Implemented a global type filter (All, Solo, Split) integrated across the data layer and UI. Refactored Summary Cards to dynamically adapt their CSS grid layout and conditionally hide Partner Share when operating solo. Enhanced Monthly and Yearly Performance charts to use stacked bars with overlaid Gross Sales lines, ensuring gapless continuous years in the Yearly chart spanning up to a 12-year window by default. Preserved strict standard financial color-coding aesthetics and fixed TypeScript prop definitions.
