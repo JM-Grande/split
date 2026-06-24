@@ -1,18 +1,25 @@
-# Current Feature
+# Current Feature: Add direct .exe download via GitHub API
 
 ## Status
-Not Started
+In Progress
 
 ## Goals
-<!-- Add goals for the current feature here -->
+- Add `data-download="exe"` attribute to download buttons in `index.html`.
+- Update download buttons' `href` to `#`.
+- Update JSON-LD `downloadUrl` to point to the latest release API.
+- Add client-side JavaScript to `main.js` to pre-fetch the latest release from the GitHub API (`https://api.github.com/repos/JM-Grande/split/releases/latest`).
+- Intercept clicks on download buttons and redirect to the cached `.exe` asset download URL.
+- Implement fallback logic to redirect to the GitHub releases page if the API call fails or the `.exe` asset is not found.
 
 ## Notes
-<!-- Add notes and context for the current feature here -->
+- This uses pure client-side JavaScript.
+- GitHub API rate limit for unauthenticated requests is 60 requests/hour per IP, which is sufficient for this use case.
+- Prefetching happens on `DOMContentLoaded`.
 
 ## References
-
-
+- Option 2 from previous discussion (GitHub API + JS redirect).
 ## History
+- **2026-06-23: Google Search Verification**: Added an HTML verification file to the static site to confirm domain ownership in Google Search Console.
 - **2026-06-20: Docs and Screenshot Refresh**: Updated documentation files (README, CONTEXT, split-project-overview) to reflect shipped features (Solo Mode, Backup/Restore, Dashboard Filters, Recharts) and replaced dashboard screenshots with the latest UI.
 - **2026-06-20: Deepen Sales Log**: Refactored the Weekly Sale domain into a cohesive `SalesLog` module. Absorbed and deleted shallow `analytics.ts` and `insights.ts` modules. Consolidated all array-iteration logic and tests into a single, unified interface for the dashboard and AI agent.
 - **2026-06-19: Marketing Site**: Created a static, offline-capable marketing landing page deployed via Cloudflare Pages. Included custom SEO configuration, semantic HTML5, smooth scrolling, and app screenshots.
