@@ -11,8 +11,9 @@ Not Started
 
 ## References
 
-
 ## History
+- **2026-06-24: Direct .exe Download via GitHub API**: Added client-side JS logic to fetch the latest release from the GitHub API and automatically redirect users to the latest .exe download link.
+- **2026-06-23: Google Search Verification**: Added an HTML verification file to the static site to confirm domain ownership in Google Search Console.
 - **2026-06-20: Docs and Screenshot Refresh**: Updated documentation files (README, CONTEXT, split-project-overview) to reflect shipped features (Solo Mode, Backup/Restore, Dashboard Filters, Recharts) and replaced dashboard screenshots with the latest UI.
 - **2026-06-20: Deepen Sales Log**: Refactored the Weekly Sale domain into a cohesive `SalesLog` module. Absorbed and deleted shallow `analytics.ts` and `insights.ts` modules. Consolidated all array-iteration logic and tests into a single, unified interface for the dashboard and AI agent.
 - **2026-06-19: Marketing Site**: Created a static, offline-capable marketing landing page deployed via Cloudflare Pages. Included custom SEO configuration, semantic HTML5, smooth scrolling, and app screenshots.
