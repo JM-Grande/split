@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --loglevel=error
 
+      - name: Generate Windows Icon
+        run: node scripts/build-icon.js
+
       # Build the Next.js frontend
       - name: Build Next.js
         run: npm run build
