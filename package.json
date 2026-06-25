@@ -19,7 +19,7 @@
     "postbuild": "node scripts/patch-prisma-alias.js",
     "start": "next start",
     "desktop": "npx @electron/rebuild -f -w better-sqlite3 && electron .",
-    "dist": "npm run build && node scripts/build-icon.js && electron-builder",
+    "dist": "npm run build && node scripts/build-icon.js && npx @electron/rebuild -f -w better-sqlite3 && electron-builder",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -123,7 +123,6 @@
     },
     "win": {
       "target": "nsis",
-      "signAndEditExecutable": false,
       "icon": "build/icon.ico"
     },
     "nsis": {
