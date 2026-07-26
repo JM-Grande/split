@@ -12,16 +12,13 @@ export async function loginAction(
   prevState: unknown,
   formData: FormData
 ) {
-
   try {
     await signIn("credentials", formData);
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
-          return { success: false, error: "Invalid email or password." };
-        case "AccessDenied":
-          return { success: false, error: "Email needs to be verified." };
+          return { success: false, error: "Invalid PIN." };
         default:
           return { success: false, error: "Something went wrong." };
       }
@@ -51,13 +48,13 @@ export async function registerAction(
   formData: FormData
 ) {
   const name = formData.get("name");
-  const email = formData.get("email") as string;
-  const password = formData.get("password");
+  const pin = formData.get("pin");
+  const confirmPin = formData.get("confirmPin");
 
   const validatedFields = registerSchema.safeParse({
     name,
-    email,
-    password,
+    pin,
+    confirmPin,
   });
 
   if (!validatedFields.success) {
@@ -77,24 +74,22 @@ export async function registerAction(
     };
   }
 
-  const { name: validName, email: validEmail, password: validPassword } = validatedFields.data;
+  const { name: validName, pin: validPin } = validatedFields.data;
 
   const existingUser = await prisma.user.findUnique({
-    where: { email: validEmail },
+    where: { name: validName },
   });
 
   if (existingUser) {
-    return { success: false, error: "Email already exists." };
+    return { success: false, error: "User already exists with this name." };
   }
 
-  const hashedPassword = await bcrypt.hash(validPassword, 12);
+  const hashedPassword = await bcrypt.hash(validPin, 12);
 
   await prisma.user.create({
     data: {
       name: validName,
-      email: validEmail,
       password: hashedPassword,
-      emailVerified: new Date(),
     },
   });
 
@@ -108,14 +103,14 @@ export async function changePasswordAction(
   try {
     const userId = await requireAuth();
     
-    const currentPassword = formData.get("currentPassword");
-    const newPassword = formData.get("newPassword");
-    const confirmPassword = formData.get("confirmPassword");
+    const currentPin = formData.get("currentPin");
+    const newPin = formData.get("newPin");
+    const confirmPin = formData.get("confirmPin");
 
     const validatedFields = changePasswordSchema.safeParse({
-      currentPassword,
-      newPassword,
-      confirmPassword,
+      currentPin,
+      newPin,
+      confirmPin,
     });
 
     if (!validatedFields.success) {
@@ -135,7 +130,7 @@ export async function changePasswordAction(
       };
     }
 
-    const { currentPassword: curPass, newPassword: newPass } = validatedFields.data;
+    const { currentPin: curPin, newPin: freshPin } = validatedFields.data;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -145,22 +140,22 @@ export async function changePasswordAction(
       return { success: false, error: "User not found." };
     }
 
-    const passwordMatch = await bcrypt.compare(curPass, user.password);
+    const passwordMatch = await bcrypt.compare(curPin, user.password);
 
     if (!passwordMatch) {
-      return { success: false, error: "Incorrect current password." };
+      return { success: false, error: "Incorrect current PIN." };
     }
 
-    const hashedPassword = await bcrypt.hash(newPass, 12);
+    const hashedPassword = await bcrypt.hash(freshPin, 12);
 
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
     });
 
-    return { success: true, message: "Password updated successfully." };
+    return { success: true, message: "PIN updated successfully." };
   } catch (error) {
-    console.error("Change password error:", error);
+    console.error("Change PIN error:", error);
     return { success: false, error: "Something went wrong." };
   }
 }
@@ -172,10 +167,10 @@ export async function deleteAccountAction(
   try {
     const userId = await requireAuth();
 
-    const password = formData.get("password");
-    const confirmPassword = formData.get("confirmPassword");
+    const pin = formData.get("pin");
+    const confirmPin = formData.get("confirmPin");
 
-    const validatedFields = deleteAccountSchema.safeParse({ password, confirmPassword });
+    const validatedFields = deleteAccountSchema.safeParse({ pin, confirmPin });
 
     if (!validatedFields.success) {
       const details = validatedFields.error.issues.reduce((acc, issue) => {
@@ -202,10 +197,10 @@ export async function deleteAccountAction(
       return { success: false, error: "User not found." };
     }
 
-    const passwordMatch = await bcrypt.compare(validatedFields.data.password, user.password);
+    const passwordMatch = await bcrypt.compare(validatedFields.data.pin, user.password);
 
     if (!passwordMatch) {
-      return { success: false, error: "Incorrect password." };
+      return { success: false, error: "Incorrect PIN." };
     }
 
     await prisma.user.delete({
@@ -227,41 +222,53 @@ export async function forgotPasswordAction(
   prevState: unknown,
   formData: FormData
 ) {
-  const email = formData.get("email") as string;
+  const name = formData.get("name") as string | null;
   const recoveryKey = formData.get("recoveryKey") as string;
 
-  const validatedFields = forgotPasswordSchema.safeParse({ email, recoveryKey });
+  const validatedFields = forgotPasswordSchema.safeParse({ name: name || undefined, recoveryKey });
 
   if (!validatedFields.success) {
-    return { success: false, error: "Invalid email or recovery key." };
+    return { success: false, error: "Invalid recovery key." };
   }
 
-  const { email: validEmail, recoveryKey: validKey } = validatedFields.data;
+  const { name: validName, recoveryKey: validKey } = validatedFields.data;
 
-  const user = await prisma.user.findUnique({
-    where: { email: validEmail },
-  });
-
-  if (!user || !user.recoveryKey) {
-    return { success: false, error: "Invalid email or recovery key." };
+  let targetUser = null;
+  if (validName) {
+    targetUser = await prisma.user.findUnique({
+      where: { name: validName },
+    });
+    if (targetUser && targetUser.recoveryKey) {
+      const match = await bcrypt.compare(validKey, targetUser.recoveryKey);
+      if (!match) targetUser = null;
+    } else {
+      targetUser = null;
+    }
+  } else {
+    const users = await prisma.user.findMany({ where: { NOT: { recoveryKey: null } } });
+    for (const u of users) {
+      if (u.recoveryKey && (await bcrypt.compare(validKey, u.recoveryKey))) {
+        targetUser = u;
+        break;
+      }
+    }
   }
 
-  const keyMatch = await bcrypt.compare(validKey, user.recoveryKey);
-  if (!keyMatch) {
-    return { success: false, error: "Invalid email or recovery key." };
+  if (!targetUser) {
+    return { success: false, error: "Invalid recovery key." };
   }
 
   const token = crypto.randomUUID();
   const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-  // Clean up any existing reset tokens for this email
+  // Clean up any existing reset tokens for this user name
   await prisma.passwordResetToken.deleteMany({
-    where: { email: validEmail },
+    where: { name: targetUser.name },
   });
 
   await prisma.passwordResetToken.create({
     data: {
-      email: validEmail,
+      name: targetUser.name,
       token,
       expires,
     },
@@ -279,13 +286,13 @@ export async function resetPasswordAction(
   formData: FormData
 ) {
   const token = formData.get("token");
-  const newPassword = formData.get("newPassword");
-  const confirmPassword = formData.get("confirmPassword");
+  const newPin = formData.get("newPin");
+  const confirmPin = formData.get("confirmPin");
 
   const validatedFields = resetPasswordSchema.safeParse({
     token,
-    newPassword,
-    confirmPassword,
+    newPin,
+    confirmPin,
   });
 
   if (!validatedFields.success) {
@@ -305,7 +312,7 @@ export async function resetPasswordAction(
     };
   }
 
-  const { token: validToken, newPassword: validNewPassword } = validatedFields.data;
+  const { token: validToken, newPin: validNewPin } = validatedFields.data;
 
   const resetTokenRecord = await prisma.passwordResetToken.findUnique({
     where: { token: validToken },
@@ -323,14 +330,14 @@ export async function resetPasswordAction(
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: resetTokenRecord.email },
+    where: { name: resetTokenRecord.name },
   });
 
   if (!user) {
     return { success: false, error: "User not found." };
   }
 
-  const hashedPassword = await bcrypt.hash(validNewPassword, 12);
+  const hashedPassword = await bcrypt.hash(validNewPin, 12);
 
   await prisma.$transaction([
     prisma.user.update({
@@ -342,7 +349,7 @@ export async function resetPasswordAction(
     }),
   ]);
 
-  return { success: true, message: "Password reset successfully." };
+  return { success: true, message: "PIN reset successfully." };
 }
 
 export async function generateRecoveryKeyAction() {
@@ -362,4 +369,4 @@ export async function generateRecoveryKeyAction() {
     console.error("Generate recovery key error:", error);
     return { success: false, error: "Something went wrong." };
   }
-}
+}

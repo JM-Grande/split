@@ -8,9 +8,7 @@ datasource db {
 
 model User {
   id                       String       @id @default(uuid())
-  name                     String       @default("Admin")
-  email                    String       @unique
-  emailVerified            DateTime?
+  name                     String       @unique @default("Admin")
   password                 String
   default_split_percentage Float        @default(60)
   openrouterKey            String?
@@ -19,22 +17,13 @@ model User {
   weeklySales              WeeklySale[]
 }
 
-model VerificationToken {
-  id      String   @id @default(uuid())
-  email   String
-  token   String   @unique
-  expires DateTime
-
-  @@unique([email, token])
-}
-
 model PasswordResetToken {
   id      String   @id @default(uuid())
-  email   String
+  name    String
   token   String   @unique
   expires DateTime
 
-  @@unique([email, token])
+  @@unique([name, token])
 }
 
 model WeeklySale {

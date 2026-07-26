@@ -4,11 +4,11 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
+import { pinSchema } from "@/lib/schemas/auth";
 
 const onboardingSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  pin: pinSchema,
   defaultSplitPercentage: z.number().min(1).max(100, "Percentage must be between 1 and 100"),
   openrouterKey: z.string().nullable().optional(),
   aiModel: z.string().default("deepseek/deepseek-v4-flash"),
@@ -34,18 +34,18 @@ export async function completeOnboardingAction(data: OnboardingInput) {
       };
     }
 
-    const { name, email, password, defaultSplitPercentage, openrouterKey, aiModel } = validated.data;
+    const { name, pin, defaultSplitPercentage, openrouterKey, aiModel } = validated.data;
 
-    // Double check email uniqueness just in case
+    // Double check name uniqueness just in case
     const existing = await prisma.user.findUnique({
-      where: { email }
+      where: { name }
     });
     if (existing) {
-      return { success: false, error: "Email is already taken." };
+      return { success: false, error: "User already exists with this name." };
     }
 
-    // 3. Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // 3. Hash PIN
+    const hashedPassword = await bcrypt.hash(pin, 12);
 
     const rawRecoveryKey = crypto.randomBytes(8).toString('hex').match(/.{1,4}/g)?.join('-').toUpperCase() || "SPLT-AAAA-BBBB-CCCC";
     const hashedRecoveryKey = await bcrypt.hash(rawRecoveryKey, 12);
@@ -54,12 +54,10 @@ export async function completeOnboardingAction(data: OnboardingInput) {
     await prisma.user.create({
       data: {
         name,
-        email,
         password: hashedPassword,
         default_split_percentage: defaultSplitPercentage,
         openrouterKey: openrouterKey || null,
         aiModel: aiModel || "deepseek/deepseek-v4-flash",
-        emailVerified: new Date(), // Auto-verify email for local usage
         recoveryKey: hashedRecoveryKey,
       }
     });

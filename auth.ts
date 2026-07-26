@@ -4,50 +4,38 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
 export class InvalidLoginError extends CredentialsSignin {
-  code = "Invalid email or password.";
-}
-
-export class UnverifiedEmailError extends CredentialsSignin {
-  code = "Email needs to be verified.";
+  code = "Invalid PIN.";
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        pin: { label: "PIN", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.pin) {
           throw new InvalidLoginError();
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
+        const pin = credentials.pin as string;
+        const users = await prisma.user.findMany();
 
-        if (!user) {
-          throw new InvalidLoginError();
-        }
-        
-        let passwordMatch = false;
-        try {
-          passwordMatch = await bcrypt.compare(credentials.password as string, user.password);
-        } catch (err) {
-          console.error("Password verification error:", err);
-        }
-
-        if (passwordMatch) {
-          if (!user.emailVerified) {
-            throw new Error("AccessDenied");
+        for (const user of users) {
+          let passwordMatch = false;
+          try {
+            passwordMatch = await bcrypt.compare(pin, user.password);
+          } catch (err) {
+            console.error("PIN verification error:", err);
           }
-          return { 
-            id: user.id.toString(), 
-            email: user.email, 
-            name: user.name,
-            default_split_percentage: user.default_split_percentage
-          };
+
+          if (passwordMatch) {
+            return { 
+              id: user.id.toString(), 
+              name: user.name,
+              default_split_percentage: user.default_split_percentage
+            };
+          }
         }
 
         throw new InvalidLoginError();

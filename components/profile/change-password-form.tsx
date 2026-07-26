@@ -1,42 +1,48 @@
 "use client";
 
-import { useActionState, useState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { changePasswordAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
-import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { PinInput } from "@/components/ui/pin-input";
 
 export function ChangePasswordForm() {
   const [state, action, isPending] = useActionState(changePasswordAction, null);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state?.success) {
-      toast.success(state.success);
-      // Reset form if success
-      formRef.current?.reset();
+      toast.success(state.message || "PIN updated successfully.");
     }
   }, [state]);
+
+  const handleFormAction = async (formData: FormData) => {
+    await action(formData);
+    setCurrentPin("");
+    setNewPin("");
+    setConfirmPin("");
+    formRef.current?.reset();
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-5 text-primary" />
-          Change Password
+          Change PIN
         </CardTitle>
         <CardDescription>
-          Ensure your account is using a long, random password to stay secure.
+          Ensure your account is protected with a secure 4-digit PIN.
         </CardDescription>
       </CardHeader>
-      <form ref={formRef} id="change-password-form" action={action}>
+      <form ref={formRef} id="change-password-form" action={handleFormAction}>
         <CardContent className="space-y-4 pb-8">
           <div aria-live="polite" aria-atomic="true">
             {state?.error ? (
@@ -48,84 +54,54 @@ export function ChangePasswordForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <InputGroup>
-              <InputGroupInput
-                id="currentPassword"
-                name="currentPassword"
-                type={showCurrentPassword ? "text" : "password"}
-                required
-                disabled={isPending}
-                placeholder="••••••••"
-              />
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  aria-label={showCurrentPassword ? "Hide password" : "Show password"}
-                >
-                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </InputGroupButton>
-              </InputGroupAddon>
-            </InputGroup>
-            {state?.details?.currentPassword ? (
-              <p className="text-sm text-destructive">{state.details.currentPassword[0]}</p>
+            <Label htmlFor="currentPin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Current 4-Digit PIN</Label>
+            <PinInput
+              id="currentPin"
+              name="currentPin"
+              value={currentPin}
+              onChange={setCurrentPin}
+              disabled={isPending}
+              error={!!state?.details?.currentPin}
+            />
+            {state?.details?.currentPin ? (
+              <p className="text-sm text-destructive text-center">{state.details.currentPin[0]}</p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password</Label>
-            <InputGroup>
-              <InputGroupInput
-                id="newPassword"
-                name="newPassword"
-                type={showNewPassword ? "text" : "password"}
-                required
-                disabled={isPending}
-                placeholder="••••••••"
-              />
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  aria-label={showNewPassword ? "Hide password" : "Show password"}
-                >
-                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </InputGroupButton>
-              </InputGroupAddon>
-            </InputGroup>
-            {state?.details?.newPassword ? (
-              <p className="text-sm text-destructive">{state.details.newPassword[0]}</p>
+            <Label htmlFor="newPin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New 4-Digit PIN</Label>
+            <PinInput
+              id="newPin"
+              name="newPin"
+              value={newPin}
+              onChange={setNewPin}
+              disabled={isPending}
+              error={!!state?.details?.newPin}
+            />
+            {state?.details?.newPin ? (
+              <p className="text-sm text-destructive text-center">{state.details.newPin[0]}</p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <InputGroup>
-              <InputGroupInput
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                required
-                disabled={isPending}
-                placeholder="••••••••"
-              />
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </InputGroupButton>
-              </InputGroupAddon>
-            </InputGroup>
-            {state?.details?.confirmPassword ? (
-              <p className="text-sm text-destructive">{state.details.confirmPassword[0]}</p>
+            <Label htmlFor="confirmPin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm New 4-Digit PIN</Label>
+            <PinInput
+              id="confirmPin"
+              name="confirmPin"
+              value={confirmPin}
+              onChange={setConfirmPin}
+              disabled={isPending}
+              error={!!state?.details?.confirmPin}
+            />
+            {state?.details?.confirmPin ? (
+              <p className="text-sm text-destructive text-center">{state.details.confirmPin[0]}</p>
             ) : null}
           </div>
         </CardContent>
         <CardFooter className="flex justify-end border-t bg-muted/50 px-6 py-4">
           <Button type="submit" disabled={isPending}>
             {isPending ? <Loader2 data-icon="inline-start" className="animate-spin" /> : null}
-            Save Password
+            Save PIN
           </Button>
         </CardFooter>
       </form>

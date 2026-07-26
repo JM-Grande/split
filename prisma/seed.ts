@@ -14,7 +14,7 @@ interface SeedEntry {
   notes?: string;
 }
 
-const SEED_PASSWORD = 'Password123!';
+const SEED_PIN = '1234';
 const SALT_ROUNDS = 12;
 
 function generateRandomData(weeks: number, startDate: Date): SeedEntry[] {
@@ -36,9 +36,7 @@ function generateRandomData(weeks: number, startDate: Date): SeedEntry[] {
   const currentDate = new Date(startDate);
   
   for (let i = 0; i < weeks; i++) {
-    // Random gross between 4000 and 8000
     const gross = Math.floor(Math.random() * (8000 - 4000 + 1) + 4000); 
-    // Random expenses between 500 and 1500
     const expenses = Math.floor(Math.random() * (1500 - 500 + 1) + 500); 
     const expenseType = expenseTypes[Math.floor(Math.random() * expenseTypes.length)];
     const note = possibleNotes[Math.floor(Math.random() * possibleNotes.length)];
@@ -51,17 +49,13 @@ function generateRandomData(weeks: number, startDate: Date): SeedEntry[] {
       notes: note,
     });
 
-    // Advance by 7 days
     currentDate.setDate(currentDate.getDate() + 7);
   }
 
   return data;
 }
 
-// Generate 52 weeks (1 year) of random data for admin starting Jan 7, 2024
 const adminSalesData: SeedEntry[] = generateRandomData(52, new Date('2024-01-07T00:00:00Z'));
-
-// Generate 12 weeks of random data for partner starting Jan 5, 2025
 const partnerSalesData: SeedEntry[] = generateRandomData(12, new Date('2025-01-05T00:00:00Z'));
 
 async function main() {
@@ -69,37 +63,31 @@ async function main() {
 
   // --- Cleanup ---
   await prisma.weeklySale.deleteMany();
-  await prisma.verificationToken.deleteMany();
   await prisma.passwordResetToken.deleteMany();
   await prisma.user.deleteMany();
   console.log('✅ Cleared existing data.');
 
-  const hashedPassword = await bcrypt.hash(SEED_PASSWORD, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(SEED_PIN, SALT_ROUNDS);
   const hashedRecoveryKey = await bcrypt.hash('SPLT-SEED-KEY1-1234', SALT_ROUNDS);
-  const now = new Date();
 
   // --- Create Users ---
   const admin = await prisma.user.create({
     data: {
-      name: 'Admin User',
-      email: 'admin@example.com',
+      name: 'Admin',
       password: hashedPassword,
       recoveryKey: hashedRecoveryKey,
-      emailVerified: now,
     },
   });
 
   const partner = await prisma.user.create({
     data: {
-      name: 'Partner User',
-      email: 'partner@example.com',
+      name: 'Partner',
       password: hashedPassword,
       recoveryKey: hashedRecoveryKey,
-      emailVerified: now,
     },
   });
 
-  console.log(`✅ Created users: ${admin.email}, ${partner.email}`);
+  console.log(`✅ Created users: ${admin.name}, ${partner.name}`);
 
   // --- Seed Admin Sales Records ---
   let adminCount = 0;
@@ -147,11 +135,11 @@ async function main() {
     partnerCount++;
   }
 
-  console.log(`✅ Seeded ${adminCount} randomized records for ${admin.email}`);
-  console.log(`✅ Seeded ${partnerCount} randomized records for ${partner.email}`);
+  console.log(`✅ Seeded ${adminCount} randomized records for ${admin.name}`);
+  console.log(`✅ Seeded ${partnerCount} randomized records for ${partner.name}`);
   console.log('');
   console.log('🔑 Seed credentials (both accounts):');
-  console.log(`   Password: ${SEED_PASSWORD}`);
+  console.log(`   PIN: ${SEED_PIN}`);
   console.log(`   Recovery Key: SPLT-SEED-KEY1-1234`);
   console.log('');
   console.log('🎉 Seed complete!');

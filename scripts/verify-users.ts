@@ -2,21 +2,18 @@ import "dotenv/config";
 import prisma from "../lib/prisma";
 
 async function main() {
-  const usersToVerify = [
-    "admin@example.com",
-    "user@example.com",
-    "test2@example.com",
-  ];
+  const usersToVerify = ["Admin", "Partner"];
 
-  for (const email of usersToVerify) {
+  for (const name of usersToVerify) {
     try {
-      const user = await prisma.user.update({
-        where: { email },
-        data: { emailVerified: new Date() },
+      const user = await prisma.user.findUnique({
+        where: { name },
       });
-      console.log(`Verified user: ${user.email}`);
+      if (user) {
+        console.log(`Found user: ${user.name}`);
+      }
     } catch (error) {
-      console.error(`Failed to verify user ${email}:`, error);
+      console.error(`Failed to find user ${name}:`, error);
     }
   }
 }
