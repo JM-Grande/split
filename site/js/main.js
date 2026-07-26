@@ -56,4 +56,64 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // Feedback & Bug Report Modal Logic
+  const feedbackModal = document.getElementById('feedback-modal');
+  const openFeedbackBtn = document.getElementById('open-feedback-btn');
+  const openFooterFeedback = document.getElementById('open-footer-feedback');
+  const closeFeedbackBtn = document.getElementById('close-feedback-btn');
+  const siteCloseModalBtn = document.getElementById('site-close-modal-btn');
+  const siteCopyEmailBtn = document.getElementById('site-copy-email-btn');
+  const SUPPORT_EMAIL = 'xopaslabs@gmail.com';
+
+  const openModal = () => {
+    if (feedbackModal) {
+      feedbackModal.classList.add('open');
+      feedbackModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeModal = () => {
+    if (feedbackModal) {
+      feedbackModal.classList.remove('open');
+      feedbackModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  };
+
+  if (openFeedbackBtn) openFeedbackBtn.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
+  if (openFooterFeedback) openFooterFeedback.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
+  if (closeFeedbackBtn) closeFeedbackBtn.addEventListener('click', closeModal);
+  if (siteCloseModalBtn) siteCloseModalBtn.addEventListener('click', closeModal);
+
+  if (feedbackModal) {
+    feedbackModal.addEventListener('click', (e) => {
+      if (e.target === feedbackModal) closeModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && feedbackModal && feedbackModal.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  if (siteCopyEmailBtn) {
+    siteCopyEmailBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(SUPPORT_EMAIL);
+        const originalText = siteCopyEmailBtn.innerText;
+        siteCopyEmailBtn.innerText = 'Copied!';
+        siteCopyEmailBtn.style.color = '#10b981';
+        setTimeout(() => {
+          siteCopyEmailBtn.innerText = originalText;
+          siteCopyEmailBtn.style.color = '';
+        }, 2500);
+      } catch (err) {
+        console.error('Failed to copy email:', err);
+      }
+    });
+  }
 });
+
