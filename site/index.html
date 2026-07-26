@@ -58,6 +58,7 @@
         <ul class="nav-links">
           <li><a href="#features">Features</a></li>
           <li><a href="#ai">AI Insights</a></li>
+          <li><button type="button" class="nav-link-btn" id="open-feedback-btn">Feedback &amp; Bugs</button></li>
           <li>
             <a href="https://github.com/JM-Grande/split" target="_blank" rel="noopener noreferrer">GitHub</a>
           </li>
@@ -219,6 +220,7 @@
           <ul>
             <li><a href="#features">Features</a></li>
             <li><a href="https://github.com/JM-Grande/split/releases" target="_blank" rel="noopener noreferrer">Download Releases</a></li>
+            <li><a href="#" id="open-footer-feedback">Send Feedback &amp; Bugs</a></li>
             <li><a href="https://github.com/JM-Grande/split/issues" target="_blank" rel="noopener noreferrer">Report an Issue</a></li>
           </ul>
         </div>
@@ -237,6 +239,32 @@
       </div>
     </div>
   </footer>
+
+  <!-- Feedback / Bug Report Modal -->
+  <div id="feedback-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="feedback-modal-title">
+    <div class="modal-card">
+      <button type="button" class="modal-close-btn" id="close-feedback-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-header">
+        <h3 id="feedback-modal-title">Send Feedback or Report Bugs</h3>
+        <p>We'd love to hear your thoughts, feature requests, or issue reports.</p>
+      </div>
+
+      <div class="modal-body">
+        <div class="support-email-card">
+          <div class="email-info">
+            <span class="email-label">Direct Support Email</span>
+            <span class="email-address">xopaslabs@gmail.com</span>
+          </div>
+          <button type="button" id="site-copy-email-btn" class="btn btn-secondary btn-sm">Copy Email</button>
+        </div>
+
+        <div class="modal-footer">
+          <a href="https://github.com/JM-Grande/split/issues" target="_blank" rel="noopener noreferrer" class="github-link">GitHub Issues &rarr;</a>
+          <button type="button" id="site-close-modal-btn" class="btn btn-secondary btn-sm">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

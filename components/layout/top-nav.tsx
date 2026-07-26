@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { Bell, LogOut, User as UserIcon, Menu, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, getInitials } from "@/lib/utils";
 import { logoutAction } from "@/lib/actions/auth";
+import { FeedbackModal } from "@/components/feedback/feedback-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +39,7 @@ interface TopNavProps {
 
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <header className="border-b border-border bg-background">
@@ -78,6 +81,11 @@ export function TopNav({ user }: TopNavProps) {
                   Sales Log
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="cursor-pointer">
+                <MessageSquarePlus className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span>Send Feedback / Bugs</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -110,6 +118,16 @@ export function TopNav({ user }: TopNavProps) {
           </nav>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setFeedbackOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs font-medium"
+          >
+            <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+            <span>Feedback & Bugs</span>
+          </Button>
+
           <Button 
             variant="ghost" 
             size="icon" 
@@ -148,6 +166,10 @@ export function TopNav({ user }: TopNavProps) {
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="cursor-pointer">
+                    <MessageSquarePlus className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span>Send Feedback / Bugs</span>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
@@ -174,6 +196,8 @@ export function TopNav({ user }: TopNavProps) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         </div>
       </div>
     </header>
