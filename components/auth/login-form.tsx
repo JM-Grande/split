@@ -9,15 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertCircle, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { loginSchema, LoginInput, forgotPasswordSchema, ForgotPasswordInput } from "@/lib/schemas/auth";
+import { PinInput } from "@/components/ui/pin-input";
 
 export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isReset?: boolean }) {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   
@@ -25,14 +25,13 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
   const [forgotError, setForgotError] = useState<string | null>(null);
 
   const {
-    register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: standardSchemaResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      pin: "",
     },
   });
 
@@ -44,7 +43,6 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
   } = useForm<ForgotPasswordInput>({
     resolver: standardSchemaResolver(forgotPasswordSchema),
     defaultValues: {
-      email: "",
       recoveryKey: "",
     },
   });
@@ -54,16 +52,13 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
     
     try {
       const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false, // Handle redirect manually to avoid full page reload if preferred, or handle error
+        pin: data.pin,
+        redirect: false,
       });
 
       if (result?.error) {
         if (result.error === "CredentialsSignin") {
-          setGlobalError("Invalid email or password.");
-        } else if (result.error === "AccessDenied") {
-          setGlobalError("Email needs to be verified.");
+          setGlobalError("Invalid 4-digit PIN.");
         } else {
           setGlobalError("Something went wrong.");
         }
@@ -80,7 +75,7 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
     setForgotSuccess(null);
     
     const formData = new FormData();
-    formData.append("email", data.email);
+    if (data.name) formData.append("name", data.name);
     formData.append("recoveryKey", data.recoveryKey);
     
     const result = await forgotPasswordAction(null, formData);
@@ -96,7 +91,7 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
       <CardHeader>
         <CardTitle className="text-2xl font-semibold tracking-tight">Login</CardTitle>
         <CardDescription>
-          Enter your email below to login to your account.
+          Enter your 4-digit PIN to log in.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -105,13 +100,13 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
             {isVerified && !globalError && !isReset && (
               <div className="mb-4 flex w-full items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
                 <CheckCircle className="h-4 w-4" />
-                <span>Email verified successfully. You can now log in.</span>
+                <span>Account created successfully. You can now log in.</span>
               </div>
             )}
             {isReset && !globalError && (
               <div className="mb-4 flex w-full items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
                 <CheckCircle className="h-4 w-4" />
-                <span>Password reset successfully. You can now log in.</span>
+                <span>PIN reset successfully. You can now log in.</span>
               </div>
             )}
             {globalError && (
@@ -121,24 +116,10 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
               </div>
             )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="m@example.com" 
-              autoComplete="email"
-              disabled={isSubmitting}
-              className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+
           <div className="grid gap-2 mb-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" title="Password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
+              <Label htmlFor="pin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">4-Digit PIN</Label>
               <Dialog open={isForgotModalOpen} onOpenChange={(open) => {
                 setIsForgotModalOpen(open);
                 if (!open) {
@@ -149,14 +130,14 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
               }}>
                 <DialogTrigger asChild>
                   <button type="button" className="text-xs font-medium text-muted-foreground hover:text-primary underline underline-offset-4">
-                    Forgot password?
+                    Forgot PIN?
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:rounded-[16px]">
                   <DialogHeader>
-                    <DialogTitle>Offline Password Recovery</DialogTitle>
+                    <DialogTitle>Offline PIN Recovery</DialogTitle>
                     <DialogDescription>
-                      Enter your email address and your 16-character Recovery Key to securely reset your password.
+                      Enter your 16-character Recovery Key to securely reset your PIN.
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={(e) => {
@@ -170,7 +151,6 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
                             <CheckCircle className="h-5 w-5" />
                             <span>{forgotSuccess.message}</span>
                           </div>
-
                         </div>
                       )}
                       {forgotError && (
@@ -182,20 +162,6 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
                     </div>
                     {!forgotSuccess && (
                       <>
-                        <div className="grid gap-2">
-                          <Label htmlFor="forgot-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
-                          <Input
-                            id="forgot-email"
-                            type="email"
-                            placeholder="m@example.com"
-                            disabled={isForgotSubmitting}
-                            className={forgotErrors.email ? "border-destructive focus-visible:ring-destructive" : ""}
-                            {...registerForgot("email")}
-                          />
-                          {forgotErrors.email && (
-                            <p className="text-sm text-destructive">{forgotErrors.email.message}</p>
-                          )}
-                        </div>
                         <div className="grid gap-2">
                           <Label htmlFor="forgot-recoveryKey" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recovery Key</Label>
                           <Input
@@ -219,35 +185,22 @@ export function LoginForm({ isVerified, isReset }: { isVerified?: boolean; isRes
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="relative">
-              <Input 
-                id="password" 
-                type={showPassword ? "text" : "password"} 
-                autoComplete="current-password"
-                disabled={isSubmitting}
-                className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
-                {...register("password")}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground hover:text-foreground"
-                onClick={() => setShowPassword((prev) => !prev)}
-                disabled={isSubmitting}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-                <span className="sr-only">
-                  {showPassword ? "Hide password" : "Show password"}
-                </span>
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+            <Controller
+              name="pin"
+              control={control}
+              render={({ field }) => (
+                <PinInput
+                  id="pin"
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isSubmitting}
+                  error={!!errors.pin}
+                  autoFocus
+                />
+              )}
+            />
+            {errors.pin && (
+              <p className="text-sm text-destructive text-center">{errors.pin.message}</p>
             )}
           </div>
         </CardContent>

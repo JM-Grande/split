@@ -7,29 +7,27 @@ const adapter = new PrismaBetterSqlite3({ url: "dev.db" });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = 'admin@example.com';
-  // Generating a secure, random 12-character password
-  const randomSuffix = Math.random().toString(36).slice(-6);
-  const plainTextPassword = `Admin${randomSuffix}!`;
+  const name = 'Admin';
+  const newPin = '1234';
   
-  console.log('Generating bcrypt(12) hash...');
-  const hashedPassword = await bcrypt.hash(plainTextPassword, 12);
+  console.log('Generating bcrypt(12) hash for 4-digit PIN...');
+  const hashedPassword = await bcrypt.hash(newPin, 12);
   
   console.log('Updating database...');
   await prisma.user.update({
-    where: { email },
+    where: { name },
     data: { password: hashedPassword }
   });
   
   console.log(`\n=========================================`);
-  console.log(`Success! Password for ${email} updated to:`);
-  console.log(`Password: ${plainTextPassword}`);
+  console.log(`Success! PIN for user ${name} updated to:`);
+  console.log(`PIN: ${newPin}`);
   console.log(`=========================================\n`);
 }
 
 main()
   .catch(e => {
-    console.error('Error updating password:', e);
+    console.error('Error updating PIN:', e);
     process.exit(1);
   })
   .finally(async () => {

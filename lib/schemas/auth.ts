@@ -1,46 +1,60 @@
 import { z } from "zod";
 
-export const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters long"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-});
+export const pinSchema = z
+  .string()
+  .regex(/^\d{4}$/, "PIN must be exactly 4 numeric digits");
+
+export const registerSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters long"),
+    pin: pinSchema,
+    confirmPin: z.string().min(1, "Please confirm your 4-digit PIN"),
+  })
+  .refine((data) => data.pin === data.confirmPin, {
+    message: "PINs do not match",
+    path: ["confirmPin"],
+  });
 
 export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
+  pin: pinSchema,
 });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "New password must be at least 8 characters long"),
-  confirmPassword: z.string().min(1, "Please confirm your new password"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPin: pinSchema,
+    newPin: pinSchema,
+    confirmPin: z.string().min(1, "Please confirm your new 4-digit PIN"),
+  })
+  .refine((data) => data.newPin === data.confirmPin, {
+    message: "PINs do not match",
+    path: ["confirmPin"],
+  });
 
-export const deleteAccountSchema = z.object({
-  password: z.string().min(1, "Password is required to delete your account"),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+export const deleteAccountSchema = z
+  .object({
+    pin: pinSchema,
+    confirmPin: z.string().min(1, "Please confirm your PIN"),
+  })
+  .refine((data) => data.pin === data.confirmPin, {
+    message: "PINs do not match",
+    path: ["confirmPin"],
+  });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  name: z.string().optional(),
   recoveryKey: z.string().min(1, "Recovery Key is required"),
 });
 
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1, "Token is required"),
-  newPassword: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z.string().min(1, "Please confirm your new password"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Token is required"),
+    newPin: pinSchema,
+    confirmPin: z.string().min(1, "Please confirm your new 4-digit PIN"),
+  })
+  .refine((data) => data.newPin === data.confirmPin, {
+    message: "PINs do not match",
+    path: ["confirmPin"],
+  });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

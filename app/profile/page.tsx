@@ -76,7 +76,7 @@ export default async function ProfilePage() {
                       </Avatar>
                       <div>
                         <CardTitle className="text-2xl">{user.name || "User"}</CardTitle>
-                        <CardDescription>{user.email}</CardDescription>
+                        <CardDescription>{user.name || "Admin"}</CardDescription>
                       </div>
                     </CardHeader>
                     <CardContent>

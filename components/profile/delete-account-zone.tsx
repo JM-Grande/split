@@ -14,14 +14,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Loader2, Trash2, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { AlertTriangle, Loader2, Trash2, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { PinInput } from "@/components/ui/pin-input";
 
 export function DeleteAccountZone() {
   const [state, action, isPending] = useActionState(deleteAccountAction, null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   return (
     <Card className="border-destructive/50">
@@ -54,66 +54,42 @@ export function DeleteAccountZone() {
                       Are you absolutely sure?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action will permanently delete your account and remove all your data from our servers. 
+                      This action will permanently delete your account and remove all your data. 
                       This includes all weekly sales records you have recorded.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   
                   <div className="my-6 space-y-4 rounded-md border border-destructive/20 bg-destructive/5 p-4 text-foreground">
-                    <p className="text-sm font-medium">Please enter your password to confirm:</p>
+                    <p className="text-sm font-medium">Please enter your 4-digit PIN to confirm:</p>
                     
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="delete-password">Current Password</Label>
-                        <InputGroup>
-                          <InputGroupInput
-                            id="delete-password"
-                            name="password"
-                            type={showPassword ? "text" : "password"}
-                            required
-                            disabled={isPending}
-                            placeholder="••••••••"
-                            className="bg-background"
-                          />
-                          <InputGroupAddon align="inline-end">
-                            <InputGroupButton
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              aria-label={showPassword ? "Hide password" : "Show password"}
-                            >
-                              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </InputGroupButton>
-                          </InputGroupAddon>
-                        </InputGroup>
-                        {state?.details?.password ? (
-                          <p className="text-sm text-destructive font-medium">{state.details.password[0]}</p>
+                        <Label htmlFor="delete-pin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">4-Digit PIN</Label>
+                        <PinInput
+                          id="delete-pin"
+                          name="pin"
+                          value={pin}
+                          onChange={setPin}
+                          disabled={isPending}
+                          error={!!state?.details?.pin}
+                        />
+                        {state?.details?.pin ? (
+                          <p className="text-sm text-destructive font-medium text-center">{state.details.pin[0]}</p>
                         ) : null}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-delete-password">Confirm Password</Label>
-                        <InputGroup>
-                          <InputGroupInput
-                            id="confirm-delete-password"
-                            name="confirmPassword"
-                            type={showConfirmPassword ? "text" : "password"}
-                            required
-                            disabled={isPending}
-                            placeholder="••••••••"
-                            className="bg-background"
-                          />
-                          <InputGroupAddon align="inline-end">
-                            <InputGroupButton
-                              type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                            >
-                              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                            </InputGroupButton>
-                          </InputGroupAddon>
-                        </InputGroup>
-                        {state?.details?.confirmPassword ? (
-                          <p className="text-sm text-destructive font-medium">{state.details.confirmPassword[0]}</p>
+                        <Label htmlFor="confirm-delete-pin" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm 4-Digit PIN</Label>
+                        <PinInput
+                          id="confirm-delete-pin"
+                          name="confirmPin"
+                          value={confirmPin}
+                          onChange={setConfirmPin}
+                          disabled={isPending}
+                          error={!!state?.details?.confirmPin}
+                        />
+                        {state?.details?.confirmPin ? (
+                          <p className="text-sm text-destructive font-medium text-center">{state.details.confirmPin[0]}</p>
                         ) : null}
                       </div>
                     </div>

@@ -19,6 +19,7 @@ import {
   Coins,
   Bot
 } from "lucide-react";
+import { PinInput } from "@/components/ui/pin-input";
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -30,9 +31,8 @@ export function OnboardingWizard() {
   // Form State
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    pin: "",
+    confirmPin: "",
     defaultSplitPercentage: 60,
     openrouterKey: "",
     aiModel: "deepseek/deepseek-v4-flash",
@@ -43,6 +43,13 @@ export function OnboardingWizard() {
     setFormData((prev) => ({
       ...prev,
       [id]: value,
+    }));
+  };
+
+  const handlePinChange = (field: "pin" | "confirmPin", value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
     }));
   };
 
@@ -59,16 +66,11 @@ export function OnboardingWizard() {
 
     if (step === 2) {
       if (!formData.name.trim()) stepErrors.name = ["Name is required"];
-      if (!formData.email.trim()) {
-        stepErrors.email = ["Email is required"];
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        stepErrors.email = ["Please enter a valid email address"];
+      if (!/^\d{4}$/.test(formData.pin)) {
+        stepErrors.pin = ["PIN must be exactly 4 numeric digits"];
       }
-      if (formData.password.length < 8) {
-        stepErrors.password = ["Password must be at least 8 characters long"];
-      }
-      if (formData.password !== formData.confirmPassword) {
-        stepErrors.confirmPassword = ["Passwords do not match"];
+      if (formData.pin !== formData.confirmPin) {
+        stepErrors.confirmPin = ["PINs do not match"];
       }
     }
 
@@ -91,8 +93,7 @@ export function OnboardingWizard() {
     try {
       const response = await completeOnboardingAction({
         name: formData.name,
-        email: formData.email,
-        password: formData.password,
+        pin: formData.pin,
         defaultSplitPercentage: formData.defaultSplitPercentage,
         openrouterKey: formData.openrouterKey || null,
         aiModel: formData.aiModel,
@@ -195,42 +196,23 @@ export function OnboardingWizard() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input 
-                id="email" 
-                type="email"
-                placeholder="e.g. admin@shop.com" 
-                value={formData.email} 
-                onChange={handleChange}
-                className={errors.email ? "border-destructive" : ""}
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">4-Digit PIN</Label>
+              <PinInput
+                value={formData.pin}
+                onChange={(val) => handlePinChange("pin", val)}
+                error={!!errors.pin}
               />
-              {errors.email && <p className="text-xs text-destructive">{errors.email[0]}</p>}
+              {errors.pin && <p className="text-xs text-destructive text-center">{errors.pin[0]}</p>}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password"
-                placeholder="Minimum 8 characters" 
-                value={formData.password} 
-                onChange={handleChange}
-                className={errors.password ? "border-destructive" : ""}
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirm 4-Digit PIN</Label>
+              <PinInput
+                value={formData.confirmPin}
+                onChange={(val) => handlePinChange("confirmPin", val)}
+                error={!!errors.confirmPin}
               />
-              {errors.password && <p className="text-xs text-destructive">{errors.password[0]}</p>}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password"
-                placeholder="Re-enter password" 
-                value={formData.confirmPassword} 
-                onChange={handleChange}
-                className={errors.confirmPassword ? "border-destructive" : ""}
-              />
-              {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword[0]}</p>}
+              {errors.confirmPin && <p className="text-xs text-destructive text-center">{errors.confirmPin[0]}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex justify-between p-8 border-t border-border mt-4">
@@ -388,8 +370,8 @@ export function OnboardingWizard() {
               <ShieldAlert className="h-6 w-6" /> Save Your Recovery Key
             </CardTitle>
             <CardDescription className="text-base text-foreground">
-              Because Split runs completely offline, there is no email server to reset your password.
-              If you forget your password, this key is the <strong>ONLY</strong> way to recover your account.
+              Because Split runs completely offline, there is no email server to reset your PIN.
+              If you forget your PIN, this key is the <strong>ONLY</strong> way to recover your account.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-8 py-6">
@@ -401,7 +383,7 @@ export function OnboardingWizard() {
             <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
               <li>Copy this key and save it in a password manager.</li>
               <li>Do not lose this key. We cannot recover your data without it.</li>
-              <li>Anyone with this key and your email can reset your password.</li>
+              <li>Anyone with this key and your name can reset your PIN.</li>
             </ul>
           </CardContent>
           <CardFooter className="flex justify-end p-8 border-t border-border mt-4 bg-muted/20">
